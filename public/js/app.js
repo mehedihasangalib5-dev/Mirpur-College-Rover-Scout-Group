@@ -1,1 +1,592 @@
+/* ---------------------------------------------------------
+   APP.JS — state, router and page renderers for the
+   National Scout Organization public website.
+   Plain HTML5 / CSS3 / JavaScript (no build step, no framework).
+--------------------------------------------------------- */
 
+const state = {
+  lang: localStorage.getItem("sc_lang") === "en" ? "en" : (localStorage.getItem("sc_lang") === "bn" ? "bn" : "bn"),
+  dark: localStorage.getItem("sc_dark") === "1" ? true : (localStorage.getItem("sc_dark") === "0" ? false : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)),
+  page: (location.hash || "#home").replace("#", "") || "home",
+  drawerOpen: false,
+  searchOpen: false,
+};
+
+function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
+function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
+function setPage(p) { state.page = p; location.hash = p; state.drawerOpen = false; state.searchOpen = false; window.scrollTo({ top: 0, behavior: "instant" }); render(); }
+function setDrawer(v) { state.drawerOpen = v; render(); }
+function setSearchOpen(v) { state.searchOpen = v; render(); }
+
+window.addEventListener("hashchange", () => {
+  state.page = (location.hash || "#home").replace("#", "") || "home";
+  render();
+});
+
+/* ---------------- small view helpers ---------------- */
+
+function icon(name, opts = "") {
+  return `<i data-lucide="${name}" ${opts}></i>`;
+}
+
+function eyebrow(text) {
+  return `<div class="sc-eyebrow text-ember text-sm mb-2">${text}</div>`;
+}
+
+function sectionTitle(eyebrowText, title) {
+  return `
+    <div class="mb-8 reveal">
+      ${eyebrow(eyebrowText)}
+      <h2 class="sc-display text-3xl md:text-4xl font-bold text-forest">${title}</h2>
+      <div class="divider-crest w-24 mt-3"></div>
+    </div>`;
+}
+
+function card(inner, cls = "") {
+  return `<div class="card p-5 reveal ${cls}">${inner}</div>`;
+}
+
+function patch(iconName, label, sub, tone = "gold", size = 128, rotate = 0) {
+  return `
+    <div class="patch ${tone === "ember" ? "patch-ember" : ""} bg-forest" style="width:${size}px;height:${size}px;transform:rotate(${rotate}deg)">
+      ${icon(iconName, `style="width:${size * 0.28}px;height:${size * 0.28}px" class="text-cream"`)}
+      <div class="sc-display text-cream" style="font-size:${size * 0.11}px;margin-top:4px;line-height:1.1;padding:0 8px">${label}</div>
+      ${sub ? `<div class="text-cream" style="font-size:${size * 0.075}px;opacity:.8">${sub}</div>` : ""}
+    </div>`;
+}
+
+function compassMark(size = 40, spin = false) {
+  return `<img src="img/logo.png" alt="${L(ORG.name, state.lang)}" width="${size}" height="${size}" class="logo-mark${spin ? " logo-mark-spin" : ""}" style="width:${size}px;height:${size}px" />`;
+}
+
+/* ---------------- nav / drawer / search ---------------- */
+
+function renderNav() {
+  const lang = state.lang;
+  const current = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === state.page);
+  return `
+  <header class="bg-forest sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2 px-3 sm:px-4 md:px-6 py-3">
+      <button onclick="setPage('home')" class="flex items-center gap-2 sm:gap-3 min-w-0" style="background:none;border:none;cursor:pointer;">
+        ${compassMark(36)}
+        <div class="text-left min-w-0">
+          <div class="sc-display text-cream text-sm sm:text-lg font-bold leading-none truncate">
+            ${lang === "bn" ? "মিরপুর কলেজ রোভার স্কাউট গ্রুপ" : "Mirpur College Rover Scout Group"}
+          </div>
+          <div class="sc-eyebrow text-gold text-[9px] sm:text-xs mt-1 hidden xs:block">${lang === "bn" ? "মিরপুর-২, ঢাকা" : "MIRPUR-2, DHAKA"}</div>
+        </div>
+      </button>
+
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <span class="hidden lg:block text-cream sc-eyebrow text-xs opacity-80 mr-2">${current ? L(current.label, lang) : ""}</span>
+        <button aria-label="${L(UI.search, lang)}" onclick="setSearchOpen(${!state.searchOpen})" class="icon-btn">${icon("search", 'style="width:16px;height:16px"')}</button>
+        <button aria-label="${L(UI.toggleTheme, lang)}" onclick="setDark(${!state.dark})" class="icon-btn">${icon(state.dark ? "sun" : "moon", 'style="width:16px;height:16px"')}</button>
+        <button aria-label="${L(UI.toggleLang, lang)}" onclick="setLang('${lang === "bn" ? "en" : "bn"}')" class="icon-btn w-auto px-2.5 sc-eyebrow text-[11px]">${L(UI.toggleLang, lang)}</button>
+        <button onclick="setDrawer(true)" class="btn-ghost flex items-center gap-2 !px-3 !py-2">${icon("menu", 'style="width:16px;height:16px"')} <span class="hidden sm:inline text-sm">${L(UI.menu, lang)}</span></button>
+      </div>
+    </div>
+
+    ${state.searchOpen ? `
+    <div class="border-t border-cream border-opacity-10 bg-forest-mid">
+      <div class="max-w-3xl mx-auto px-3 sm:px-6 py-3">
+        ${renderSmartSearch()}
+      </div>
+    </div>` : ""}
+  </header>
+
+  ${state.drawerOpen ? renderDrawer() : ""}
+  `;
+}
+
+function renderSmartSearch() {
+  const lang = state.lang;
+  return `
+    <div class="search-panel p-3 w-full">
+      <div class="flex items-center gap-2 border-b border-rope border-opacity-20 pb-2 mb-2">
+        ${icon("search", 'style="width:18px;height:18px" class="text-rope flex-shrink-0"')}
+        <input id="searchInput" autofocus oninput="onSearchInput(this.value)" placeholder="${L(UI.searchPlaceholder, lang)}" class="flex-1 bg-transparent outline-none text-forest text-sm" style="border:none;">
+        <button onclick="setSearchOpen(false)" style="background:none;border:none;cursor:pointer;">${icon("x", 'style="width:16px;height:16px" class="text-rope"')}</button>
+      </div>
+      <div id="searchResults" class="max-h-72 overflow-y-auto flex flex-col gap-1"></div>
+    </div>`;
+}
+
+function onSearchInput(q) {
+  const lang = state.lang;
+  const query = q.trim().toLowerCase();
+  const resultsEl = document.getElementById("searchResults");
+  if (!resultsEl) return;
+  if (!query) { resultsEl.innerHTML = ""; return; }
+  const results = SEARCH_INDEX.filter(item => {
+    const bn = (item.label.bn || "").toLowerCase();
+    const en = (item.label.en || "").toLowerCase();
+    return bn.includes(query) || en.includes(query);
+  }).slice(0, 8);
+  if (results.length === 0) {
+    resultsEl.innerHTML = `<div class="text-rope text-sm px-2 py-3 text-center">${L(UI.noResults, lang)}</div>`;
+  } else {
+    resultsEl.innerHTML = results.map(r => `
+      <button onclick="setPage('${r.page}')" class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-canvas text-left w-full" style="background:none;border:none;cursor:pointer;">
+        ${icon(r.icon, 'style="width:16px;height:16px" class="text-ember flex-shrink-0"')}
+        <span class="text-forest text-sm flex-1">${L(r.label, lang)}</span>
+        <span class="sc-eyebrow text-rope text-[10px]">${L(r.kind, lang)}</span>
+      </button>`).join("");
+  }
+  createIcons();
+}
+
+function renderDrawer() {
+  const lang = state.lang;
+  return `
+  <div class="fixed inset-0 z-50 flex justify-end">
+    <div class="absolute inset-0 bg-black opacity-50" onclick="setDrawer(false)"></div>
+    <div class="relative bg-forest w-80 max-w-[85vw] h-full p-6 overflow-y-auto contour-bg">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">${compassMark(32)}<span class="sc-display text-cream font-bold">${L(UI.menu, lang)}</span></div>
+        <button onclick="setDrawer(false)" style="background:none;border:none;cursor:pointer;">${icon("x", 'class="text-cream"')}</button>
+      </div>
+      ${NAV_GROUPS.map(group => `
+        <div class="mb-6">
+          <div class="sc-eyebrow text-gold text-xs mb-3">${L(group.title, lang)}</div>
+          <div class="flex flex-col gap-1">
+            ${group.items.map(item => `
+              <button onclick="setPage('${item.id}')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-left w-full ${state.page === item.id ? "tab-active" : "tab-idle"}" style="border:none;cursor:pointer;">
+                ${icon(item.icon, 'style="width:18px;height:18px"')}
+                <span>${L(item.label, lang)}</span>
+                ${icon("chevron-right", 'style="width:14px;height:14px" class="ml-auto opacity-50"')}
+              </button>`).join("")}
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function renderFooter() {
+  const lang = state.lang;
+  return `
+  <footer class="bg-forest contour-bg pt-14 pb-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-cream">
+      <div>
+        <div class="flex items-center gap-2 mb-3">${compassMark(30)}<span class="sc-display font-bold">${lang === "bn" ? "মিরপুর কলেজ রোভার স্কাউট গ্রুপ" : "Mirpur College Rover Scout Group"}</span></div>
+        <p class="text-sm opacity-75">${lang === "bn" ? "মিরপুর কলেজের রোভার স্কাউটদের নেতৃত্ব ও সেবার মানসিকতা গড়ে তোলার প্ল্যাটফর্ম।" : "Building leadership and a spirit of service among the Rover Scouts of Mirpur College."}</p>
+      </div>
+      <div>
+        <div class="sc-eyebrow text-gold text-xs mb-3">${lang === "bn" ? "লিংক" : "Links"}</div>
+        <div class="flex flex-col gap-2 text-sm opacity-85">
+          <button onclick="setPage('about')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "আমাদের সম্পর্কে" : "About Us"}</button>
+          <button onclick="setPage('events')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "ইভেন্ট" : "Events"}</button>
+          <button onclick="setPage('downloads')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "ডাউনলোড" : "Downloads"}</button>
+        </div>
+      </div>
+      <div>
+        <div class="sc-eyebrow text-gold text-xs mb-3">${lang === "bn" ? "সদস্য" : "Members"}</div>
+        <div class="flex flex-col gap-2 text-sm opacity-85">
+          <button onclick="setPage('register')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "রেজিস্ট্রেশন" : "Registration"}</button>
+          <button onclick="setPage('portal')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal"}</button>
+          <button onclick="setPage('badges')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "ব্যাজ" : "Badges"}</button>
+        </div>
+      </div>
+      <div>
+        <div class="sc-eyebrow text-gold text-xs mb-3">${lang === "bn" ? "যোগাযোগ" : "Contact"}</div>
+        <div class="flex flex-col gap-2 text-sm opacity-85">
+          <span>mcrsg.mirpurcollege@gmail.com</span>
+          <span>+৮৮০ ১৭xx-xxxxxx</span>
+        </div>
+      </div>
+    </div>
+    <div class="divider-rope max-w-6xl mx-auto mt-10 mb-5"></div>
+    <div class="text-center text-cream text-xs opacity-60">
+      ${lang === "bn" ? "© ২০২৬ মিরপুর কলেজ রোভার স্কাউট গ্রুপ — সকল অধিকার সংরক্ষিত" : "© 2026 Mirpur College Rover Scout Group — All rights reserved"}
+    </div>
+  </footer>`;
+}
+
+/* ---------------- pages ---------------- */
+
+function pageHome() {
+  const lang = state.lang;
+  return `
+    <section class="bg-forest contour-bg relative overflow-hidden">
+      <div class="hero-sheen"></div>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-28 flex flex-col md:flex-row items-center gap-8 md:gap-10 relative">
+        <div class="flex-1 text-center md:text-left">
+          ${eyebrow(L(UI.scoutMotto, lang))}
+          <h1 class="sc-display text-cream text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight">
+            ${lang === "bn" ? "নেতৃত্ব ও সেবার <br class='hidden sm:block'> এক তারুণ্যদীপ্ত যাত্রা" : "A Youthful Journey of <br class='hidden sm:block'> Leadership & Service"}
+          </h1>
+          <p class="text-cream opacity-85 mt-5 max-w-md mx-auto md:mx-0">
+            ${lang === "bn" ? "মিরপুর কলেজ রোভার স্কাউট গ্রুপ কলেজ শিক্ষার্থীদের নেতৃত্ব, স্বেচ্ছাসেবা ও অভিযাত্রার মাধ্যমে দায়িত্বশীল নাগরিক হিসেবে গড়ে তোলে।" : "Mirpur College Rover Scout Group shapes responsible young citizens through leadership, community service, and adventure."}
+          </p>
+          <div class="flex gap-4 mt-8 flex-wrap justify-center md:justify-start">
+            <button onclick="setPage('register')" class="btn-primary">${L(UI.joinNow, lang)}</button>
+            <button onclick="setPage('about')" class="btn-ghost">${L(UI.learnMore, lang)}</button>
+          </div>
+        </div>
+        <div class="flex-1 flex justify-center"><div class="float-slow">${compassMark(190)}</div></div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "স্বাগতম" : "Welcome", lang === "bn" ? "আমাদের বার্তা" : "Our Message")}
+      <p class="max-w-2xl text-rope leading-relaxed">
+        ${lang === "bn" ? "আমরা বিশ্বাস করি প্রতিটি তরুণ-তরুণীর মাঝে নেতৃত্বের বীজ লুকিয়ে আছে। মিরপুর কলেজের প্রাঙ্গণ থেকে শুরু করে ক্যাম্পের আগুনের পাশে এবং সেবার হাত বাড়িয়ে আমরা সেই বীজকে অঙ্কুরিত করি। আমাদের এই রোভারিং যাত্রায় আপনাকে স্বাগতম।" : "We believe every young person carries the seed of leadership within them. From the halls of Mirpur College to the campfire and hands-on community service, we help that seed grow. Welcome to our Rovering journey."}
+      </p>
+    </section>
+
+    <section class="bg-canvas py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 md:gap-10">
+        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার সম্মান রক্ষা করে যথাসাধ্য চেষ্টা করব — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে।\u201d" : "\u201cOn my honour, I will do my best — to do my duty to God and my country, to help other people at all times, and to obey the Scout Law.\u201d"}</p>`)}
+        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutLaw, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "একজন স্কাউট বিশ্বাসযোগ্য, বিশ্বস্ত, সহায়ক, বন্ধুত্বপূর্ণ, ভদ্র, প্রকৃতির প্রতি সদয়, শৃঙ্খলাপরায়ণ, হাসিমুখে কষ্ট সহ্যকারী, মিতব্যয়ী এবং চিন্তা-বাক্য-কাজে বিশুদ্ধ।" : "A Scout is trustworthy, loyal, helpful, friendly, courteous, kind to nature, obedient, cheerful under hardship, thrifty, and clean in thought, word, and deed."}</p>`)}
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "পরিসংখ্যান" : "Statistics", lang === "bn" ? "সংখ্যায় আমাদের সংগঠন" : "Our Organization in Numbers")}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        ${STATS.map((s, i) => `<div class="flex justify-center">${patch(s.icon, L(s.value, lang), L(s.label, lang), "gold", 110, i % 2 === 0 ? -4 : 4)}</div>`).join("")}
+      </div>
+    </section>
+
+    <section class="bg-canvas py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        ${sectionTitle(lang === "bn" ? "আপডেট" : "Updates", lang === "bn" ? "সাম্প্রতিক সংবাদ" : "Latest News")}
+        <div class="grid md:grid-cols-3 gap-6">
+          ${NEWS.map(n => card(`
+            <div class="sc-eyebrow text-ember text-xs mb-2">${L(n.tag, lang)}</div>
+            <h4 class="font-semibold text-forest mb-2">${L(n.title, lang)}</h4>
+            <div class="text-rope text-sm flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>`)).join("")}
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "সামনে যা আসছে" : "Coming Up", lang === "bn" ? "আসন্ন ইভেন্ট" : "Upcoming Events")}
+      <div class="grid md:grid-cols-3 gap-6">
+        ${EVENTS.map(e => card(`
+          <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
+          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>
+          <div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>
+          <button onclick="setPage('events')" class="btn-primary text-sm">${L(UI.registerBtn, lang)}</button>`)).join("")}
+      </div>
+    </section>
+
+    <section class="bg-canvas py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        ${sectionTitle(lang === "bn" ? "মুহূর্তগুলো" : "Moments", lang === "bn" ? "গ্যালারি" : "Gallery")}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          ${GALLERY_SEEDS.slice(0, 4).map(seed => `<img src="https://picsum.photos/seed/${seed}/400/300" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "কৃতজ্ঞতা" : "Gratitude", lang === "bn" ? "পৃষ্ঠপোষক ও অংশীদার" : "Sponsors & Partners")}
+      <div class="flex flex-wrap gap-4 sm:gap-6 items-center opacity-80">
+        ${(lang === "bn" ? ["সোনালী ব্যাংক", "গ্রামীণফোন", "বাংলাদেশ ট্যুরিজম বোর্ড", "স্কয়ার ফাউন্ডেশন"] : ["Sonali Bank", "Grameenphone", "Bangladesh Tourism Board", "Square Foundation"]).map(s => `<div class="card px-5 py-3 sc-eyebrow text-forest text-xs">${s}</div>`).join("")}
+      </div>
+    </section>`;
+}
+
+function pageAbout() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "পরিচিতি" : "Introduction", lang === "bn" ? "আমাদের সম্পর্কে" : "About Us")}
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        ${ABOUT_BLOCKS.map(b => card(`
+          ${icon(b.icon, 'style="width:26px;height:26px" class="text-ember mb-3"')}
+          <h4 class="sc-display font-bold text-forest mb-2">${L(b.title, lang)}</h4>
+          <p class="text-rope text-sm leading-relaxed">${L(b.body, lang)}</p>`)).join("")}
+      </div>
+    </div>`;
+}
+
+function pageLeadership() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "আমাদের কাণ্ডারি" : "Our Guides", lang === "bn" ? "নেতৃত্ব" : "Leadership")}
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        ${LEADERSHIP.map(l => card(`
+          <div class="flex justify-center mb-4">${icon(l.icon, 'style="width:30px;height:30px" class="text-ember"')}</div>
+          <h4 class="font-semibold text-forest">${l.name}</h4>
+          <div class="sc-eyebrow text-rope text-xs mt-1">${L(l.role, lang)}</div>`, "text-center")).join("")}
+      </div>
+    </div>`;
+}
+
+function pageContact() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "সাহায্য দরকার?" : "Need Help?", lang === "bn" ? "যোগাযোগ করুন" : "Get in Touch")}
+      <div class="grid md:grid-cols-2 gap-6 md:gap-8">
+        ${card(`
+          <div class="grid grid-cols-1 gap-4">
+            <input class="input-field" placeholder="${L(UI.yourName, lang)}" />
+            <input class="input-field" placeholder="${L(UI.email, lang)}" />
+            <textarea class="input-field" rows="4" placeholder="${L(UI.yourMessage, lang)}"></textarea>
+            <button class="btn-primary" onclick="alert('${lang === "bn" ? "বার্তা পাঠানো হয়েছে (নমুনা)" : "Message sent (demo)"}')">${L(UI.sendMessage, lang)}</button>
+          </div>`)}
+        ${card(`
+          <div class="rounded-lg overflow-hidden mb-4 h-48 bg-canvas flex items-center justify-center">
+            ${icon("map-pin", 'style="width:36px;height:36px" class="text-ember"')}
+            <span class="text-rope ml-2">${lang === "bn" ? "গুগল ম্যাপ (নমুনা)" : "Google Map (sample)"}</span>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
+            <div class="flex items-center gap-2 text-rope">${icon("mail", 'style="width:16px;height:16px"')} mcrsg.mirpurcollege@gmail.com</div>
+            <div class="flex items-center gap-2 text-rope">${icon("facebook", 'style="width:16px;height:16px"')} fb.com/mirpurcollegerover</div>
+            <div class="flex items-center gap-2 text-rope">${icon("youtube", 'style="width:16px;height:16px"')} youtube.com/mirpurcollegerover</div>
+          </div>`)}
+      </div>
+    </div>`;
+}
+
+function pageGallery() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "স্মৃতির পাতা" : "Memories", lang === "bn" ? "গ্যালারি" : "Gallery")}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        ${GALLERY_SEEDS.map(seed => `<img src="https://picsum.photos/seed/${seed}/400/300" class="rounded-lg object-cover w-full h-32 sm:h-36" alt="scout gallery" />`).join("")}
+      </div>
+    </div>`;
+}
+
+function pageDownloads() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "নথিপত্র" : "Documents", lang === "bn" ? "ডাউনলোড" : "Downloads")}
+      <div class="flex flex-col gap-3">
+        ${DOWNLOADS.map(d => card(`
+          <div class="flex items-center gap-3">
+            ${icon("file-text", 'style="width:22px;height:22px" class="text-ember flex-shrink-0"')}
+            <div>
+              <div class="text-forest font-medium">${L(d.name, lang)}</div>
+              <div class="text-rope text-xs">${d.size}</div>
+            </div>
+          </div>
+          <a href="${d.file}" download class="btn-primary text-sm flex items-center justify-center gap-2">${icon("download", 'style="width:16px;height:16px"')} ${L(UI.download, lang)}</a>`,
+          "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3")).join("")}
+      </div>
+    </div>`;
+}
+
+function pageEvents() {
+  const lang = state.lang;
+  const cats = lang === "bn"
+    ? ["ক্যাম্প রেজিস্ট্রেশন", "হাইকিং", "প্রশিক্ষণ", "স্বেচ্ছাসেবক কর্মসূচি", "কমিউনিটি সার্ভিস"]
+    : ["Camp Registration", "Hiking", "Training", "Volunteer Programs", "Community Service"];
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "কর্মসূচি" : "Programs", lang === "bn" ? "ইভেন্টসমূহ" : "Events")}
+      <div class="flex flex-wrap gap-2 sm:gap-3 mb-8">
+        ${cats.map(c => `<span class="card px-4 py-2 text-sm text-forest">${c}</span>`).join("")}
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        ${EVENTS.map(e => card(`
+          <img src="https://picsum.photos/seed/${e.title.bn.length}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
+          <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
+          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>
+          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>
+          <div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("users", 'style="width:14px;height:14px"')}${L(UI.participants, lang)}: ${L(e.seats, lang)}</div>
+          <button onclick="setPage('register')" class="btn-primary text-sm w-full">${L(UI.registerBtn, lang)}</button>`)).join("")}
+      </div>
+    </div>`;
+}
+
+function pageNews() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "প্রকাশনা" : "Publications", lang === "bn" ? "সংবাদ ও নোটিশ" : "News & Notices")}
+      <div class="flex flex-col gap-4">
+        ${NEWS.map(n => card(`
+          <div class="sc-eyebrow text-ember text-xs bg-canvas px-2 py-1 rounded flex-shrink-0">${L(n.tag, lang)}</div>
+          <div>
+            <h4 class="font-semibold text-forest">${L(n.title, lang)}</h4>
+            <div class="text-rope text-sm mt-1 flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>
+          </div>`, "flex items-start gap-4")).join("")}
+      </div>
+    </div>`;
+}
+
+function pageBadges() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "সম্মাননা" : "Honours", lang === "bn" ? "ব্যাজ ম্যানেজমেন্ট" : "Badge Management")}
+      <div class="flex flex-wrap gap-6 sm:gap-8">
+        ${BADGES.map((b, i) => patch(b.icon, L(b.name, lang), "", i % 2 ? "ember" : "gold", 110, i % 2 ? -4 : 4)).join("")}
+      </div>
+    </div>`;
+}
+
+function pageCamp() {
+  const lang = state.lang;
+  const teams = lang === "bn" ? ["ঈগল দল", "বাঘ দল", "ময়ূর দল", "সিংহ দল"] : ["Eagle Team", "Tiger Team", "Peacock Team", "Lion Team"];
+  const schedule = lang === "bn"
+    ? [["সকাল ৬:০০", "প্রার্থনা ও প্যারেড"], ["সকাল ৮:০০", "প্রাতঃরাশ"], ["সকাল ৯:৩০", "দক্ষতা প্রশিক্ষণ"], ["দুপুর ১:০০", "মধ্যাহ্নভোজ"], ["বিকাল ৪:০০", "খেলাধুলা"], ["সন্ধ্যা ৭:০০", "ক্যাম্পফায়ার"]]
+    : [["6:00 AM", "Prayer & Parade"], ["8:00 AM", "Breakfast"], ["9:30 AM", "Skills Training"], ["1:00 PM", "Lunch"], ["4:00 PM", "Sports"], ["7:00 PM", "Campfire"]];
+  const duties = lang === "bn"
+    ? ["রান্নাঘর দায়িত্ব — ঈগল দল", "পরিচ্ছন্নতা দায়িত্ব — বাঘ দল", "নিরাপত্তা দায়িত্ব — সিংহ দল"]
+    : ["Kitchen duty — Eagle Team", "Cleaning duty — Tiger Team", "Security duty — Lion Team"];
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "ব্যবস্থাপনা" : "Management", lang === "bn" ? "ক্যাম্প ম্যানেজমেন্ট" : "Camp Management")}
+      <div class="grid md:grid-cols-2 gap-6 md:gap-8">
+        ${card(`
+          <h4 class="sc-display font-bold text-forest mb-3">${L(UI.teamDivision, lang)}</h4>
+          <div class="flex flex-wrap gap-2">${teams.map(t => `<span class="bg-canvas text-forest text-sm px-3 py-1.5 rounded-full">${t}</span>`).join("")}</div>
+          <h4 class="sc-display font-bold text-forest mt-6 mb-3">${L(UI.dutyRoster, lang)}</h4>
+          <ul class="text-rope text-sm space-y-1">${duties.map(d => `<li>• ${d}</li>`).join("")}</ul>`)}
+        ${card(`
+          <h4 class="sc-display font-bold text-forest mb-3">${L(UI.campSchedule, lang)}</h4>
+          <ul class="text-sm space-y-2">${schedule.map(([t, a]) => `<li class="flex justify-between border-b border-rope border-opacity-20 pb-2"><span class="text-rope">${t}</span><span class="text-forest">${a}</span></li>`).join("")}</ul>`)}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8">
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">৩</div><div class="text-rope text-sm">${L(UI.activeCamps, lang)}</div>`, "text-center")}
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">৯৪%</div><div class="text-rope text-sm">${L(UI.avgAttendance, lang)}</div>`, "text-center")}
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">৫৪০+</div><div class="text-rope text-sm">${L(UI.totalCamps, lang)}</div>`, "text-center")}
+      </div>
+    </div>`;
+}
+
+function pageAchievement() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "গর্বের মুহূর্ত" : "Proud Moments", lang === "bn" ? "অর্জন" : "Achievements")}
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        ${ACHIEVEMENTS.map(a => card(`
+          ${icon(a.icon, 'style="width:28px;height:28px" class="text-ember mb-3"')}
+          <h4 class="font-semibold text-forest mb-2">${L(a.title, lang)}</h4>
+          <p class="text-rope text-sm">${L(a.detail, lang)}</p>`)).join("")}
+      </div>
+    </div>`;
+}
+
+let registerForm = {};
+let registerSubmitted = false;
+function updateRegisterField(k, v) { registerForm[k] = v; }
+function submitRegister() { registerSubmitted = true; render(); }
+function newRegisterApplication() { registerSubmitted = false; registerForm = {}; render(); }
+
+function pageRegister() {
+  const lang = state.lang;
+  if (registerSubmitted) {
+    return `
+      <div class="max-w-2xl mx-auto px-4 sm:px-6 py-24 text-center">
+        ${icon("check-circle", 'style="width:48px;height:48px" class="text-ember mx-auto mb-4"')}
+        <h3 class="sc-display text-2xl font-bold text-forest">${L(UI.applicationReceived, lang)}</h3>
+        <p class="text-rope mt-2">${L(UI.applicationReceivedSub, lang)}</p>
+        <button class="btn-primary mt-6" onclick="newRegisterApplication()">${L(UI.newApplication, lang)}</button>
+      </div>`;
+  }
+  return `
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "নতুন সদস্য" : "New Member", lang === "bn" ? "অনলাইন রেজিস্ট্রেশন" : "Online Registration")}
+      ${card(`
+        <div class="grid sm:grid-cols-2 gap-4">
+          ${REGISTER_FIELDS.map(([k, label]) => `
+            <div>
+              <label class="text-sm text-rope block mb-1">${L(label, lang)}</label>
+              <input class="input-field" value="${registerForm[k] || ""}" oninput="updateRegisterField('${k}', this.value)" />
+            </div>`).join("")}
+          <div>
+            <label class="text-sm text-rope block mb-1">${L(UI.gender, lang)}</label>
+            <select class="input-field" onchange="updateRegisterField('gender', this.value)">
+              <option value="">${L(UI.selectOption, lang)}</option>
+              <option>${L(UI.male, lang)}</option>
+              <option>${L(UI.female, lang)}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-rope block mb-1">${L(UI.photo, lang)}</label>
+            <input type="file" class="input-field" />
+          </div>
+        </div>
+        <div class="mt-5">
+          <label class="text-sm text-rope block mb-1">${L(UI.signature, lang)}</label>
+          <input class="input-field" value="${registerForm.signature || ""}" oninput="updateRegisterField('signature', this.value)" />
+        </div>
+        <button class="btn-primary mt-6" onclick="submitRegister()">${L(UI.submitApplication, lang)}</button>`)}
+    </div>`;
+}
+
+function pageMemberPortal() {
+  const lang = state.lang;
+  const attendance = 82;
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
+      <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+        ${card(`
+          <img src="https://picsum.photos/seed/profile1/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+          <h4 class="sc-display font-bold text-forest text-lg">${lang === "bn" ? "তানভীর আহমেদ" : "Tanvir Ahmed"}</h4>
+          <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: MCRSG-2024-057</div>
+          <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: B+</div>`,
+          "md:col-span-1 flex flex-col items-center text-center")}
+        ${card(`
+          <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div><span class="text-rope">${L(UI.mobile, lang)}:</span> <span class="text-forest">+৮৮০ ১৭xx-xxxxxx</span></div>
+            <div><span class="text-rope">${L(UI.email, lang)}:</span> <span class="text-forest">tanvir@example.com</span></div>
+            <div><span class="text-rope">${L(UI.institution, lang)}:</span> <span class="text-forest">${lang === "bn" ? "মিরপুর কলেজ" : "Mirpur College"}</span></div>
+            <div><span class="text-rope">${L(UI.joiningDate, lang)}:</span> <span class="text-forest">${lang === "bn" ? "১২ মার্চ, ২০২৪" : "12 March 2024"}</span></div>
+            <div><span class="text-rope">${L(UI.rank, lang)}:</span> <span class="text-forest">${lang === "bn" ? "রোভার মেট" : "Rover Mate"}</span></div>
+            <div><span class="text-rope">${L(UI.certificates, lang)}:</span> <span class="text-forest">${L(UI.achieved3, lang)}</span></div>
+          </div>
+          <div class="mt-5">
+            <div class="text-rope text-sm mb-1 flex justify-between"><span>${L(UI.attendanceRate, lang)}</span><span>${attendance}%</span></div>
+            <div class="w-full bg-canvas rounded-full h-2.5"><div class="bg-ember h-2.5 rounded-full" style="width:${attendance}%"></div></div>
+          </div>`,
+          "md:col-span-2")}
+      </div>
+      <h3 class="sc-display text-forest font-bold text-xl mt-12 mb-5">${L(UI.badgeCollection, lang)}</h3>
+      <div class="flex flex-wrap gap-4 sm:gap-6">
+        ${BADGES.slice(0, 5).map((b, i) => patch(b.icon, L(b.name, lang), "", "gold", 92, i % 2 ? 5 : -5)).join("")}
+      </div>
+    </div>`;
+}
+
+function pageLoginRedirect() {
+  const lang = state.lang;
+  return `
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-24 text-center">
+      ${icon("key-round", 'style="width:44px;height:44px" class="text-ember mx-auto mb-4"')}
+      <h3 class="sc-display text-2xl font-bold text-forest">${lang === "bn" ? "অ্যাডমিন প্যানেল" : "Admin Panel"}</h3>
+      <p class="text-rope mt-2">${lang === "bn" ? "অ্যাডমিন প্যানেল একটি পৃথক অ্যাপ্লিকেশন — নিচের লিংকে যান।" : "The admin panel is a separate application — open the link below."}</p>
+      <a href="../admin/index.html" class="btn-primary mt-6 inline-block">${lang === "bn" ? "অ্যাডমিন প্যানেলে যান" : "Go to Admin Panel"}</a>
+    </div>`;
+}
+
+const PAGES = {
+  home: pageHome, about: pageAbout, leadership: pageLeadership, contact: pageContact,
+  gallery: pageGallery, downloads: pageDownloads, events: pageEvents, news: pageNews,
+  badges: pageBadges, camp: pageCamp, achievement: pageAchievement, register: pageRegister,
+  portal: pageMemberPortal, login: pageLoginRedirect,
+};
+
+/* ---------------- root render ---------------- */
+
+function createIcons() {
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function render() {
+  document.documentElement.className = state.dark ? "dark" : "";
+  document.documentElement.lang = state.lang;
+  const root = document.getElementById("root");
+  const pageFn = PAGES[state.page] || pageHome;
+  root.innerHTML = `
+    <div class="sc-root">
+      ${renderNav()}
+      <main>${pageFn()}</main>
+      ${renderFooter()}
+    </div>`;
+  createIcons();
+}
+
+render();
