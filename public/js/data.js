@@ -61,6 +61,9 @@ const UI = {
   scoutLaw: { bn: "স্কাউট আইন", en: "Scout Law" },
   ageRange: { bn: "বয়সসীমা", en: "Age Range" },
   logbook: { bn: "রোভার লগ বুক", en: "Rover Log Book" },
+  applicantRank: { bn: "আবেদনকারী (অনুমোদনের অপেক্ষায়)", en: "Applicant (pending approval)" },
+  noBadgesYet: { bn: "এখনো কোনো ব্যাজ অর্জন করেনি", en: "No badges earned yet" },
+  newlyAdded: { bn: "নতুন", en: "New" },
 };
 
 const NAV_GROUPS = [
@@ -152,6 +155,30 @@ const ABOUT_BLOCKS = [
   { title: { bn: "রোভারিং কী", en: "What is Rovering" }, body: { bn: "রোভারিং হলো স্কাউট আন্দোলনের প্রাপ্তবয়স্ক পর্যায় (১৮-২৫ বছর) — এখানে সেবা, অভিযান ও নেতৃত্ব একসাথে চর্চা করা হয়।", en: "Rovering is the young-adult section of Scouting (ages 18–25), combining service, adventure, and leadership practice." }, icon: "compass" },
   { title: { bn: "সাংগঠনিক কাঠামো", en: "Organizational Structure" }, body: { bn: "কলেজ কর্তৃপক্ষ, রোভার স্কাউট লিডার (RSL) ও রোভার মেটদের সমন্বয়ে পরিচালিত গ্রুপ কমিটি।", en: "A Group Committee coordinated by the college authority, the Rover Scout Leader (RSL), and student Rover Mates." }, icon: "users" },
 ];
+
+/* ---------------- members (in-memory only — resets on page reload,
+   not shared between visitors; there is no backend/database wired up
+   yet, see admin/FIREBASE-SETUP.md to connect a real one) ---------------- */
+let MEMBERS = [
+  {
+    id: "MCRSG-2024-057",
+    name: { bn: "তানভীর আহমেদ", en: "Tanvir Ahmed" },
+    inst: { bn: "মিরপুর কলেজ", en: "Mirpur College" },
+    rank: { bn: "রোভার মেট", en: "Rover Mate" },
+    mobile: "+৮৮০ ১৭xx-xxxxxx",
+    email: "tanvir@example.com",
+    blood: "B+",
+    joiningDate: { bn: "১২ মার্চ, ২০২৪", en: "12 March 2024" },
+    attendance: 82,
+    badgeCount: 3,
+    avatarSeed: "mcrsg-member",
+  },
+];
+
+function nextMemberId() {
+  const year = new Date().getFullYear();
+  return `MCRSG-${year}-${String(MEMBERS.length + 1).padStart(3, "0")}`;
+}
 
 const REGISTER_FIELDS = [
   ["name", { bn: "নাম", en: "Name" }], ["studentId", { bn: "স্টুডেন্ট আইডি", en: "Student ID" }], ["department", { bn: "বিভাগ / শ্রেণি", en: "Department / Class" }],
