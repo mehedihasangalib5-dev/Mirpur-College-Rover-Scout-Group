@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- ============================================================
+     SEO — replace https://www.mirpurcollegerover.org below with
+     your REAL domain once the site is hosted (see SEO-GUIDE.md).
+     ============================================================ -->
+<title>মিরপুর কলেজ রোভার স্কাউট গ্রুপ | Mirpur College Rover Scout Group</title>
+<meta name="description" content="মিরপুর কলেজ রোভার স্কাউট গ্রুপের অফিসিয়াল ওয়েবসাইট — রোভারিং কার্যক্রম, ব্যাজ ও প্রোগ্রেস, ক্যাম্প, সদস্য রেজিস্ট্রেশন ও নেতৃত্ব। Official website of Mirpur College Rover Scout Group, Mirpur-2, Dhaka." />
+<meta name="keywords" content="Mirpur College Rover Scout Group, মিরপুর কলেজ রোভার স্কাউট, Rover Scout Bangladesh, Bangladesh Scouts, Mirpur College, রোভার স্কাউট, Rover Scout Group Dhaka" />
+<meta name="author" content="Mirpur College Rover Scout Group" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.mirpurcollegerover.org/" />
+<meta name="theme-color" content="#4A2172" />
+<link rel="icon" type="image/png" href="img/logo.png" />
+<link rel="apple-touch-icon" href="img/logo.png" />
+
+<!-- Open Graph (Facebook / LinkedIn / WhatsApp preview) -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Mirpur College Rover Scout Group" />
+<meta property="og:title" content="মিরপুর কলেজ রোভার স্কাউট গ্রুপ | Mirpur College Rover Scout Group" />
+<meta property="og:description" content="রোভারিং কার্যক্রম, ব্যাজ ও প্রোগ্রেস, ক্যাম্প এবং সদস্য রেজিস্ট্রেশন — মিরপুর কলেজ রোভার স্কাউট গ্রুপের অফিসিয়াল ওয়েবসাইট।" />
+<meta property="og:image" content="https://www.mirpurcollegerover.org/img/logo.png" />
+<meta property="og:url" content="https://www.mirpurcollegerover.org/" />
+<meta property="og:locale" content="bn_BD" />
+
+<!-- Twitter / X card -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Mirpur College Rover Scout Group" />
+<meta name="twitter:description" content="Official website of Mirpur College Rover Scout Group, Mirpur-2, Dhaka." />
+<meta name="twitter:image" content="https://www.mirpurcollegerover.org/img/logo.png" />
+
+<!-- Structured data — helps Google show the group as a proper "Organization"
+     result (logo, name, address, social links) when people search the name -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Mirpur College Rover Scout Group",
+  "alternateName": "মিরপুর কলেজ রোভার স্কাউট গ্রুপ",
+  "url": "https://www.mirpurcollegerover.org/",
+  "logo": "https://www.mirpurcollegerover.org/img/logo.png",
+  "image": "https://www.mirpurcollegerover.org/img/logo.png",
+  "description": "Mirpur College Rover Scout Group is the Rover Scout unit of Mirpur College, running rovering activities, community service, camping and leadership training for college-age members.",
+  "email": "mcrsg.mirpurcollege@gmail.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Mirpur College",
+    "addressLocality": "Mirpur-2, Dhaka",
+    "addressCountry": "BD"
+  },
+  "sameAs": [
+    "https://fb.com/mirpurcollegerover",
+    "https://youtube.com/mirpurcollegerover"
+  ]
+}
+</script>
+
+<!-- Tailwind utility classes (layout/spacing/grid/flex helpers only — all
+     colors, typography and components come from css/style.css) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Lucide icon set, used the same way the original React app used lucide-react -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="root">
+  <!-- Static SEO fallback: search engines and no-JS browsers see this
+       instantly; app.js replaces it with the full interactive site once
+       it loads. Keep this text roughly in sync with the real hero copy. -->
+  <noscript>
+    <div style="max-width:720px;margin:60px auto;padding:0 20px;font-family:sans-serif;color:#241536;">
+      <h1>মিরপুর কলেজ রোভার স্কাউট গ্রুপ — Mirpur College Rover Scout Group</h1>
+      <p>মিরপুর কলেজ, মিরপুর-২, ঢাকা। রোভারিং কার্যক্রম, ব্যাজ ও প্রোগ্রেস সিস্টেম, ক্যাম্প এবং সদস্য রেজিস্ট্রেশনের তথ্য পেতে জাভাস্ক্রিপ্ট চালু করে পুনরায় লোড করুন।</p>
+      <p>This website requires JavaScript to be enabled. Please enable JavaScript and reload to view the full site.</p>
+    </div>
+  </noscript>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // Lightweight scroll-reveal: any element with class "reveal" fades/slides
+  // in once it enters the viewport. Re-observes after every SPA re-render.
+  (function () {
+    let observer;
+    function initReveal() {
+      if (observer) observer.disconnect();
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); observer.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll(".reveal:not(.in)").forEach((el) => observer.observe(el));
+    }
+    const root = document.getElementById("root");
+    const mo = new MutationObserver(() => initReveal());
+    mo.observe(root, { childList: true, subtree: true });
+    initReveal();
+  })();
+</script>
+</body>
+</html>
