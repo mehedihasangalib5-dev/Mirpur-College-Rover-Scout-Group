@@ -331,7 +331,7 @@ function pageContact() {
         ${card(`
           <div class="rounded-lg overflow-hidden mb-4 h-48 bg-canvas flex items-center justify-center">
             ${icon("map-pin", 'style="width:36px;height:36px" class="text-ember"')}
-            <span class="text-rope ml-2">${lang === "bn" ? "R936+J9J, Mirpur College gate, Dhaka 1216" : "Google Map (sample)"}</span>
+            <span class="text-rope ml-2">${lang === "bn" ? "https://maps.app.goo.gl/X9S156sVyBB2xXkK8" : "Google Map (sample)"}</span>
           </div>
           <div class="space-y-2 text-sm">
             <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
