@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------
    APP.JS — state, router and page renderers for the
-   National Scout Organization public website.
+   Mirpur College Rover Scout Group website.
    Plain HTML5 / CSS3 / JavaScript (no build step, no framework).
 --------------------------------------------------------- */
 
@@ -14,7 +14,20 @@ const state = {
 
 function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
 function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
-function setPage(p) { state.page = p; location.hash = p; state.drawerOpen = false; state.searchOpen = false; window.scrollTo({ top: 0, behavior: "instant" }); render(); }
+function setPage(p) {
+  state.page = p;
+  state.drawerOpen = false;
+  state.searchOpen = false;
+  window.scrollTo({ top: 0, behavior: "instant" });
+  // Only touch location.hash; the hashchange listener will call render()
+  // once, avoiding the double-render that happened when this function
+  // also called render() directly.
+  if (("#" + p) !== location.hash) {
+    location.hash = p;
+  } else {
+    render();
+  }
+}
 function setDrawer(v) { state.drawerOpen = v; render(); }
 function setSearchOpen(v) { state.searchOpen = v; render(); }
 
@@ -236,8 +249,23 @@ function pageHome() {
     <section class="bg-canvas py-16">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 md:gap-10">
         ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার আত্নমর্যাদার উপর বিশ্বাস করে বলছ যে — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে আমি আমার যথাসাধ্য চেষ্টা করব।\u201d" : "\u201cOn my honor, I promise that - I will do my best to fulfill my duty to God and my country, to always help others, and to obey the Scout Law.\u201d"}</p>`)}
-        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutLaw, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "১.স্কাউট আত্মমর্যাদায় বিশ্বাসী :  A scout is trustworthy."}<br>
-        ${lang === "bn" ? "২.স্কাউট সকলের বন্ধু।" : "A Scout is a friend to all"}</p>`)}
+        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutLaw, lang)}</h3><p class="text-rope leading-relaxed">${(lang === "bn" ? [
+          "১. স্কাউট আত্মমর্যাদায় বিশ্বাসী।",
+          "২. স্কাউট সকলের বন্ধু।",
+          "৩. স্কাউট বিনয়ী ও অনুগত।",
+          "৪. স্কাউট জীবের প্রতি সদয়।",
+          "৫. স্কাউট সদা প্রফুল্ল।",
+          "৬. স্কাউট মিতব্যয়ী।",
+          "৭. স্কাউট চিন্তা, কথা ও কাজে নির্মল।",
+        ] : [
+          "1. A Scout is trustworthy.",
+          "2. A Scout is a friend to all.",
+          "3. A Scout is polite and loyal.",
+          "4. A Scout is kind to all living things.",
+          "5. A Scout is always cheerful.",
+          "6. A Scout is thrifty.",
+          "7. A Scout is clean in thought, word, and deed.",
+        ]).join("<br>")}</p>`)}
       </div>
     </section>
 
@@ -448,9 +476,9 @@ function pageCamp() {
           <ul class="text-sm space-y-2">${schedule.map(([t, a]) => `<li class="flex justify-between border-b border-rope border-opacity-20 pb-2"><span class="text-rope">${t}</span><span class="text-forest">${a}</span></li>`).join("")}</ul>`)}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8">
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">৩</div><div class="text-rope text-sm">${L(UI.activeCamps, lang)}</div>`, "text-center")}
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">৯৪%</div><div class="text-rope text-sm">${L(UI.avgAttendance, lang)}</div>`, "text-center")}
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">৫৪০+</div><div class="text-rope text-sm">${L(UI.totalCamps, lang)}</div>`, "text-center")}
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৩" : "3"}</div><div class="text-rope text-sm">${L(UI.activeCamps, lang)}</div>`, "text-center")}
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৯৪%" : "94%"}</div><div class="text-rope text-sm">${L(UI.avgAttendance, lang)}</div>`, "text-center")}
+        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৫৪০+" : "540+"}</div><div class="text-rope text-sm">${L(UI.totalCamps, lang)}</div>`, "text-center")}
       </div>
     </div>`;
 }
@@ -525,7 +553,7 @@ function pageMemberPortal() {
       ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
       <div class="grid md:grid-cols-3 gap-6 md:gap-8">
         ${card(`
-          <img src="#" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+          <img src="https://picsum.photos/seed/mcrsg-member/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
           <h4 class="sc-display font-bold text-forest text-lg">${lang === "bn" ? "তানভীর আহমেদ" : "Tanvir Ahmed"}</h4>
           <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: MCRSG-2024-057</div>
           <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: B+</div>`,
