@@ -331,7 +331,7 @@ function pageContact() {
         ${card(`
           <div class="rounded-lg overflow-hidden mb-4 h-48 bg-canvas flex items-center justify-center">
             ${icon("map-pin", 'style="width:36px;height:36px" class="text-ember"')}
-            <span class="text-rope ml-2">${lang === "bn" ? "গুগল ম্যাপ (নমুনা)" : "Google Map (sample)"}</span>
+            <span class="text-rope ml-2">${lang === "bn" ? "R936+J9J, Mirpur College gate, Dhaka 1216" : "Google Map (sample)"}</span>
           </div>
           <div class="space-y-2 text-sm">
             <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
@@ -524,7 +524,7 @@ function pageMemberPortal() {
       ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
       <div class="grid md:grid-cols-3 gap-6 md:gap-8">
         ${card(`
-          <img src="https://picsum.photos/seed/profile1/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+          <img src="#" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
           <h4 class="sc-display font-bold text-forest text-lg">${lang === "bn" ? "তানভীর আহমেদ" : "Tanvir Ahmed"}</h4>
           <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: MCRSG-2024-057</div>
           <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: B+</div>`,
