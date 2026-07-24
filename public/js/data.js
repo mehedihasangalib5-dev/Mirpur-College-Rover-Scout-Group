@@ -108,12 +108,10 @@ const EVENTS = [
 ];
 
 const LEADERSHIP = [
-  { role: { bn: "গ্রুপ চেয়ারম্যান (অধ্যক্ষ)", en: "Group Chairman (Principal)" }, name: "অধ্যাপক সাইফুল ইসলাম", icon: "shield-check" },
-  { role: { bn: "রোভার স্কাউট লিডার (RSL)", en: "Rover Scout Leader (RSL)" }, name: "জনাব মাহবুবুর রহমান", icon: "compass" },
-  { role: { bn: "সহকারী রোভার স্কাউট লিডার (ARSL)", en: "Asst. Rover Scout Leader (ARSL)" }, name: "মিসেস তাসলিমা বেগম", icon: "star" },
-  { role: { bn: "গ্রুপ সম্পাদক", en: "Group Secretary" }, name: "জনাব নাজমুল হাসান", icon: "book-open" },
-  { role: { bn: "রোভার মেট (দলনেতা)", en: "Rover Mate (Crew Leader)" }, name: "সাদিয়া ইসলাম", icon: "flag" },
-  { role: { bn: "গ্রুপ কমিটি সদস্য", en: "Group Committee Member" }, name: "জনাব ফারহান আহমেদ", icon: "users" },
+  { role: { bn: "গ্রুপ সভাপতি (ভারপ্রাপ্ত অধ্যক্ষ)", en: "Group President (Acting Principal)" }, name: "ইফ্ফাত আজমী", icon: "shield-check" },
+  { role: { bn: "রোভার স্কাউট লিডার (RSL) এবং গ্রুপ সম্পাদক", en: "Rover Scout Leader (RSL) & Group Secretary" }, name: "জনাব বুলবুল আলম", icon: "compass" },
+  { role: { bn: "সিনিয়র রোভার মেট (SRM)", en: "Senior Rover Mate (SRM)" }, name: "মো: নাবিল সিদ্দিকী", icon: "flag" },
+  { role: { bn: "সিনিয়র রোভার মেট (SRM)", en: "Senior Rover Mate (SRM)" }, name: "আফিয়া সুলতানা", icon: "star" },
 ];
 
 /* Rover Scout section badges & awards — Bangladesh Scouts Rover programme,
