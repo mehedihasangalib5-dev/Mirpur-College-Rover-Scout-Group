@@ -248,7 +248,7 @@ function pageHome() {
 
     <section class="bg-canvas py-16">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 md:gap-10">
-        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার আত্নমর্যাদার উপর বিশ্বাস করে বলছি যে — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে আমি আমার যথাসাধ্য চেষ্টা করব।\u201d" : "\u201cOn my honor, I promise that - I will do my best to fulfill my duty to God and my country, to always help others, and to obey the Scout Law.\u201d"}</p>`)}
+        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার আত্নমর্যাদার উপর বিশ্বাস করে বলছ যে — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে আমি আমার যথাসাধ্য চেষ্টা করব।\u201d" : "\u201cOn my honor, I promise that - I will do my best to fulfill my duty to God and my country, to always help others, and to obey the Scout Law.\u201d"}</p>`)}
         ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutLaw, lang)}</h3><p class="text-rope leading-relaxed">${(lang === "bn" ? [
           "১. স্কাউট আত্মমর্যাদায় বিশ্বাসী।",
           "২. স্কাউট সকলের বন্ধু।",
@@ -305,6 +305,13 @@ function pageHome() {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           ${GALLERY_SEEDS.slice(0, 4).map(seed => `<img src="https://picsum.photos/seed/${seed}/400/300" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
         </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "কৃতজ্ঞতা" : "Gratitude", lang === "bn" ? "পৃষ্ঠপোষক ও অংশীদার" : "Sponsors & Partners")}
+      <div class="flex flex-wrap gap-4 sm:gap-6 items-center opacity-80">
+        ${(lang === "bn" ? ["সোনালী ব্যাংক", "গ্রামীণফোন", "বাংলাদেশ ট্যুরিজম বোর্ড", "স্কয়ার ফাউন্ডেশন"] : ["Sonali Bank", "Grameenphone", "Bangladesh Tourism Board", "Square Foundation"]).map(s => `<div class="card px-5 py-3 sc-eyebrow text-forest text-xs">${s}</div>`).join("")}
       </div>
     </section>`;
 }
@@ -492,9 +499,36 @@ function pageAchievement() {
 
 let registerForm = {};
 let registerSubmitted = false;
+let lastRegisteredMemberId = null;
+
 function updateRegisterField(k, v) { registerForm[k] = v; }
-function submitRegister() { registerSubmitted = true; render(); }
-function newRegisterApplication() { registerSubmitted = false; registerForm = {}; render(); }
+
+function submitRegister() {
+  // Turn the filled-in application into a member profile and add it to
+  // MEMBERS (in-memory only — see the note above the MEMBERS array in
+  // data.js) so it shows up right away in the Member Portal.
+  const newId = nextMemberId();
+  const newMember = {
+    id: newId,
+    name: { bn: registerForm.name || "", en: registerForm.name || "" },
+    inst: { bn: registerForm.institution || "", en: registerForm.institution || "" },
+    rank: UI.applicantRank,
+    mobile: registerForm.phone || "",
+    email: registerForm.email || "",
+    blood: registerForm.blood || "",
+    joiningDate: { bn: new Date().toLocaleDateString("bn-BD"), en: new Date().toLocaleDateString("en-GB") },
+    attendance: 0,
+    badgeCount: 0,
+    avatarSeed: newId,
+    isNew: true,
+  };
+  MEMBERS.unshift(newMember);
+  lastRegisteredMemberId = newId;
+  registerSubmitted = true;
+  render();
+}
+
+function newRegisterApplication() { registerSubmitted = false; registerForm = {}; lastRegisteredMemberId = null; render(); }
 
 function pageRegister() {
   const lang = state.lang;
@@ -538,33 +572,41 @@ function pageRegister() {
     </div>`;
 }
 
+function memberProfileCard(m, lang) {
+  const attendance = m.attendance || 0;
+  return `
+    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+      ${card(`
+        ${m.isNew ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(UI.newlyAdded, lang)}</div>` : ""}
+        <img src="https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+        <h4 class="sc-display font-bold text-forest text-lg">${L(m.name, lang)}</h4>
+        <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: ${m.id}</div>
+        <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: ${m.blood || "—"}</div>`,
+        "md:col-span-1 flex flex-col items-center text-center")}
+      ${card(`
+        <div class="grid sm:grid-cols-2 gap-4 text-sm">
+          <div><span class="text-rope">${L(UI.mobile, lang)}:</span> <span class="text-forest">${m.mobile || "—"}</span></div>
+          <div><span class="text-rope">${L(UI.email, lang)}:</span> <span class="text-forest">${m.email || "—"}</span></div>
+          <div><span class="text-rope">${L(UI.institution, lang)}:</span> <span class="text-forest">${L(m.inst, lang) || "—"}</span></div>
+          <div><span class="text-rope">${L(UI.joiningDate, lang)}:</span> <span class="text-forest">${L(m.joiningDate, lang)}</span></div>
+          <div><span class="text-rope">${L(UI.rank, lang)}:</span> <span class="text-forest">${L(m.rank, lang)}</span></div>
+          <div><span class="text-rope">${L(UI.certificates, lang)}:</span> <span class="text-forest">${m.badgeCount ? `${m.badgeCount} ${lang === "bn" ? "টি অর্জিত" : "earned"}` : L(UI.noBadgesYet, lang)}</span></div>
+        </div>
+        <div class="mt-5">
+          <div class="text-rope text-sm mb-1 flex justify-between"><span>${L(UI.attendanceRate, lang)}</span><span>${attendance}%</span></div>
+          <div class="w-full bg-canvas rounded-full h-2.5"><div class="bg-ember h-2.5 rounded-full" style="width:${attendance}%"></div></div>
+        </div>`,
+        "md:col-span-2")}
+    </div>`;
+}
+
 function pageMemberPortal() {
   const lang = state.lang;
-  const attendance = 82;
   return `
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
-      <div class="grid md:grid-cols-3 gap-6 md:gap-8">
-        ${card(`
-          <img src="https://picsum.photos/seed/mcrsg-member/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
-          <h4 class="sc-display font-bold text-forest text-lg">${lang === "bn" ? "তানভীর আহমেদ" : "Tanvir Ahmed"}</h4>
-          <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: MCRSG-2024-057</div>
-          <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: B+</div>`,
-          "md:col-span-1 flex flex-col items-center text-center")}
-        ${card(`
-          <div class="grid sm:grid-cols-2 gap-4 text-sm">
-            <div><span class="text-rope">${L(UI.mobile, lang)}:</span> <span class="text-forest">+৮৮০ ১৭xx-xxxxxx</span></div>
-            <div><span class="text-rope">${L(UI.email, lang)}:</span> <span class="text-forest">tanvir@example.com</span></div>
-            <div><span class="text-rope">${L(UI.institution, lang)}:</span> <span class="text-forest">${lang === "bn" ? "মিরপুর কলেজ" : "Mirpur College"}</span></div>
-            <div><span class="text-rope">${L(UI.joiningDate, lang)}:</span> <span class="text-forest">${lang === "bn" ? "১২ মার্চ, ২০২৪" : "12 March 2024"}</span></div>
-            <div><span class="text-rope">${L(UI.rank, lang)}:</span> <span class="text-forest">${lang === "bn" ? "রোভার মেট" : "Rover Mate"}</span></div>
-            <div><span class="text-rope">${L(UI.certificates, lang)}:</span> <span class="text-forest">${L(UI.achieved3, lang)}</span></div>
-          </div>
-          <div class="mt-5">
-            <div class="text-rope text-sm mb-1 flex justify-between"><span>${L(UI.attendanceRate, lang)}</span><span>${attendance}%</span></div>
-            <div class="w-full bg-canvas rounded-full h-2.5"><div class="bg-ember h-2.5 rounded-full" style="width:${attendance}%"></div></div>
-          </div>`,
-          "md:col-span-2")}
+      <div class="space-y-10">
+        ${MEMBERS.map((m) => memberProfileCard(m, lang)).join("")}
       </div>
       <h3 class="sc-display text-forest font-bold text-xl mt-12 mb-5">${L(UI.badgeCollection, lang)}</h3>
       <div class="flex flex-wrap gap-4 sm:gap-6">
