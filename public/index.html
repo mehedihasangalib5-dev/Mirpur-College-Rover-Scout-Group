@@ -63,12 +63,34 @@
      colors, typography and components come from css/style.css) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Lucide icon set, used the same way the original React app used lucide-react -->
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@1.26.0"></script>
 
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div id="root">
+  <!-- Skeleton preview: shown instantly on first paint (before app.js/fonts
+       finish loading) so visitors never see a blank white screen. It is
+       plain markup, not JS-driven — the moment render() in app.js runs, it
+       overwrites #root.innerHTML and this skeleton is gone automatically. -->
+  <div class="skeleton-shell" aria-hidden="true">
+    <div class="skeleton-header">
+      <div class="skeleton skeleton-logo"></div>
+      <div class="skeleton skeleton-pill"></div>
+    </div>
+    <div class="skeleton-hero">
+      <div class="skeleton skeleton-line skeleton-line-wide"></div>
+      <div class="skeleton skeleton-line skeleton-line-wide" style="width:70%"></div>
+      <div class="skeleton skeleton-line" style="width:40%"></div>
+      <div class="skeleton skeleton-btn"></div>
+    </div>
+    <div class="skeleton-grid">
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </div>
+  </div>
+
   <!-- Static SEO fallback: search engines and no-JS browsers see this
        instantly; app.js replaces it with the full interactive site once
        it loads. Keep this text roughly in sync with the real hero copy. -->
