@@ -248,7 +248,7 @@ function pageHome() {
 
     <section class="bg-canvas py-16">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 md:gap-10">
-        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার আত্নমর্যাদার উপর বিশ্বাস করে বলছ যে — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে আমি আমার যথাসাধ্য চেষ্টা করব।\u201d" : "\u201cOn my honor, I promise that - I will do my best to fulfill my duty to God and my country, to always help others, and to obey the Scout Law.\u201d"}</p>`)}
+        ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutPromise, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cআমি আমার আত্নমর্যাদার উপর বিশ্বাস করে বলছি যে — ঈশ্বর ও দেশের প্রতি আমার কর্তব্য পালন করতে, সর্বদা অপরকে সাহায্য করতে এবং স্কাউট আইন মেনে চলতে আমি আমার যথাসাধ্য চেষ্টা করব।\u201d" : "\u201cOn my honor, I promise that - I will do my best to fulfill my duty to God and my country, to always help others, and to obey the Scout Law.\u201d"}</p>`)}
         ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutLaw, lang)}</h3><p class="text-rope leading-relaxed">${(lang === "bn" ? [
           "১. স্কাউট আত্মমর্যাদায় বিশ্বাসী।",
           "২. স্কাউট সকলের বন্ধু।",
