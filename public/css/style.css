@@ -219,3 +219,75 @@ img{ display:block; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
 }
+
+/* --- premium polish additions --- */
+
+/* custom scrollbar (WebKit + Firefox) */
+html{ scrollbar-width:thin; scrollbar-color:var(--ember) transparent; }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--rope); border-radius:9999px; border:2px solid var(--canvas-light); }
+::-webkit-scrollbar-thumb:hover{ background:var(--ember); }
+
+/* accessible, on-brand focus rings (keyboard nav) instead of the default
+   browser outline, without removing focus visibility */
+:focus{ outline:none; }
+:focus-visible{
+  outline:2px solid var(--ember);
+  outline-offset:2px;
+  border-radius:4px;
+}
+.icon-btn:focus-visible, .btn-primary:focus-visible, .btn-red:focus-visible, .btn-ghost:focus-visible{
+  outline-offset:3px;
+}
+
+/* GPU hints for continuously-animated elements so scrolling stays smooth */
+.hero-sheen, .patch, .shimmer, .divider-crest, .logo-mark-spin, .float-slow{ will-change: transform; }
+
+/* smooth fade/slide-in for <main> every time the SPA renders a new page */
+#root main{
+  animation: pageIn .38s ease both;
+}
+@keyframes pageIn{
+  0%{ opacity:0; transform: translateY(10px); }
+  100%{ opacity:1; transform: translateY(0); }
+}
+
+/* thin animated progress-style accent under the sticky header, reinforces
+   the "app-like" feel when switching pages */
+.bg-forest.sticky{ box-shadow: 0 2px 18px rgba(0,0,0,0.18); }
+
+/* --- initial skeleton loader (shown before app.js mounts) --- */
+.skeleton-shell{ font-family:'Hind Siliguri', sans-serif; }
+.skeleton{
+  background: linear-gradient(100deg, var(--canvas) 30%, rgba(74,33,114,0.08) 50%, var(--canvas) 70%);
+  background-size: 220% 100%;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+  border-radius: 0.6rem;
+}
+@keyframes skeletonPulse{
+  0%{ background-position: 140% 0; }
+  100%{ background-position: -60% 0; }
+}
+.skeleton-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 0.9rem 1.25rem; background:var(--forest-deep);
+}
+.skeleton-header .skeleton{ background:rgba(255,255,255,0.14); animation:none; }
+.skeleton-logo{ width:36px; height:36px; border-radius:9999px; }
+.skeleton-pill{ width:84px; height:32px; border-radius:9999px; }
+.skeleton-hero{
+  max-width:640px; margin:64px auto 40px; padding:0 20px;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.skeleton-line{ height:22px; width:88%; }
+.skeleton-line-wide{ height:32px; }
+.skeleton-btn{ width:150px; height:44px; border-radius:0.5rem; margin-top:10px; }
+.skeleton-grid{
+  max-width:960px; margin:0 auto 60px; padding:0 20px;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px;
+}
+.skeleton-card{ height:140px; }
+@media (prefers-reduced-motion: reduce){
+  .skeleton{ animation:none; }
+}
