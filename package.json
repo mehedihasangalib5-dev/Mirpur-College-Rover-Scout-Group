@@ -1,0 +1,13 @@
+{
+  "name": "scout-website-html-css-js",
+  "version": "1.0.0",
+  "description": "National Scout Organization — public website + admin panel, plain HTML5/CSS3/JavaScript, served by a zero-dependency Node.js static server.",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
