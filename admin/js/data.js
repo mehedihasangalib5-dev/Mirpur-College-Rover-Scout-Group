@@ -19,7 +19,7 @@ const T = {
   noPermission: { bn: "অনুমতি নেই", en: "No Permission" },
   noPermissionSub: { bn: 'আপনার রোলে "{feature}" ফিচারে প্রবেশাধিকার নেই।', en: 'Your role does not have access to the "{feature}" feature.' },
 
-  loginTitle: { bn: "অ্যাডমিন প্যানেল", en: "Admin Panel" },
+  loginTitle: { bn: "অ্যাডমিন প্যানেল", en: "Admin Pannel" },
   identifierLabel: { bn: "ইমেইল", en: "Email" },
   passwordLabel: { bn: "পাসওয়ার্ড", en: "Password" },
   loginBtn: { bn: "লগইন করুন", en: "Log In" },
