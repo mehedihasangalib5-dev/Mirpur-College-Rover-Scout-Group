@@ -12,7 +12,7 @@ function L(obj, lang) {
 const ORG = {
   name: { bn: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", en: "Mirpur College Rover Scout Group" },
   short: { bn: "এমসিআরএসজি", en: "MCRSG" },
-  tagline: { bn: "মিরপুর কলেজ, মিরপুর-২, ঢাকা-১২১৬", en: "Mirpur College, Mirpur-2, Dhaka-1216" },
+  tagline: { bn: "মিরপুর কলেজ, মিরপুর-২, ঢাকা", en: "Mirpur College, Mirpur-2, Dhaka" },
   // Change these two to update the Contact page map:
   //  - mapQuery: the address/place name to embed (no API key needed)
   //  - mapLink: the "Open in Google Maps" button target (a normal
@@ -105,13 +105,21 @@ const STATS = [
   { label: { bn: "অর্জিত ব্যাজ ও অ্যাওয়ার্ড", en: "Badges & Awards Earned" }, value: { bn: "২৩০+", en: "230+" }, icon: "award" },
 ];
 
-const NEWS = [
+/* NEWS/EVENTS/GALLERY below are `let`, not `const` — they start out as
+   demo seed content, but startNoticesListener()/startEventsListener()/
+   startGalleryListener() in app.js replace them with whatever the admin
+   panel has actually published, the moment Firestore returns at least
+   one document. This is what makes Notices/Events/Gallery published
+   from the admin panel actually show up here instead of only living in
+   the admin panel's own browser memory. */
+
+let NEWS = [
   { title: { bn: "রোভার বেসিক কোর্স (RBC) ব্যাচ-১২ সম্পন্ন", en: "Rover Basic Course (RBC) Batch-12 concludes" }, date: { bn: "১৮ জুলাই, ২০২৬", en: "18 July 2026" }, tag: { bn: "প্রতিবেদন", en: "Report" } },
   { title: { bn: "জাতীয় রোভার মুট ২০২৭ এর জন্য দল গঠন শুরু", en: "Team formation begins for National Rover Moot 2027" }, date: { bn: "১০ জুলাই, ২০২৬", en: "10 July 2026" }, tag: { bn: "ঘোষণা", en: "Announcement" } },
   { title: { bn: "নতুন সেশনে রোভার স্কোয়ার ভর্তি শুরু", en: "Rover Squire admissions open for new session" }, date: { bn: "০২ জুলাই, ২০২৬", en: "02 July 2026" }, tag: { bn: "নোটিশ", en: "Notice" } },
 ];
 
-const EVENTS = [
+let EVENTS = [
   { title: { bn: "বার্ষিক সার্ভিস ক্যাম্প — মিরপুর", en: "Annual Service Camp — Mirpur" }, date: { bn: "১৫-১৭ ডিসেম্বর", en: "15–17 Dec" }, loc: { bn: "মিরপুর কলেজ ক্যাম্পাস", en: "Mirpur College Campus" }, seats: { bn: "৭৫/১০০", en: "75/100" } },
   { title: { bn: "পাহাড়ি হাইকিং ও ট্রেকিং অভিযান", en: "Hill Hiking & Trekking Expedition" }, date: { bn: "০৫ সেপ্টেম্বর", en: "05 Sep" }, loc: { bn: "বান্দরবান", en: "Bandarban" }, seats: { bn: "২৮/৪০", en: "28/40" } },
   { title: { bn: "রক্তদান ও কমিউনিটি সার্ভিস সপ্তাহ", en: "Blood Donation & Community Service Week" }, date: { bn: "২১-২৭ আগস্ট", en: "21–27 Aug" }, loc: { bn: "মিরপুর, ঢাকা", en: "Mirpur, Dhaka" }, seats: { bn: "৬০/৮০", en: "60/80" } },
@@ -143,7 +151,13 @@ const ACHIEVEMENTS = [
   { title: { bn: "প্রেসিডেন্ট রোভার স্কাউট অ্যাওয়ার্ড ২০২৫", en: "President's Rover Scout Award 2025" }, detail: { bn: "৯ জন রোভার সম্মানিত", en: "9 rovers honoured" }, icon: "graduation-cap" },
 ];
 
-const GALLERY_SEEDS = ["camp1","hike2","badge3","group4","tent5","flag6","fire7","river8"];
+let GALLERY = ["camp1","hike2","badge3","group4","tent5","flag6","fire7","river8"];
+
+function galleryImgSrc(item) {
+  // Real admin uploads are data: URLs; the demo seed entries are just
+  // picsum.photos seed names, kept working for backward-compat.
+  return item.startsWith("data:") || item.startsWith("http") ? item : `https://picsum.photos/seed/${item}/400/300`;
+}
 
 const DOWNLOADS = [
   { name: { bn: "রোভার সদস্য রেজিস্ট্রেশন ফর্ম", en: "Rover Membership Registration Form" }, size: "245 KB · PDF", file: "downloads/registration-form.pdf" },
