@@ -196,7 +196,7 @@ function renderLoginScreen() {
   const lang = state.lang;
   return `
   <div class="ap-root min-h-screen bg-forest flex items-center justify-center px-4">
-    <div class="card w-full max-w-md p-8">
+    <div class="card w-full max-w-md p-6 sm:p-8">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           ${icon("compass", 'style="width:34px;height:34px" class="text-ember"')}
@@ -279,17 +279,17 @@ function renderShell() {
     </aside>
 
     <main class="flex-1 min-w-0">
-      <div class="bg-canvas border-b border-rope border-opacity-20 px-6 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <button aria-label="menu" onclick="toggleMobileSidebar()" class="icon-btn md:hidden">${icon("menu", 'style="width:18px;height:18px"')}</button>
-          <span class="text-rope text-sm">${L(T.loggedInAs, lang)}: <span class="text-forest font-medium">${identifier}</span></span>
+      <div class="bg-canvas border-b border-rope border-opacity-20 px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button aria-label="menu" onclick="toggleMobileSidebar()" class="icon-btn md:hidden shrink-0">${icon("menu", 'style="width:18px;height:18px"')}</button>
+          <span class="text-rope text-sm truncate"><span class="hidden sm:inline">${L(T.loggedInAs, lang)}: </span><span class="text-forest font-medium">${identifier}</span></span>
         </div>
-        <div class="flex items-center gap-4">
-          <span class="ap-eyebrow text-xs text-ember">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
+        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+          <span class="ap-eyebrow text-xs text-ember hidden sm:inline">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
           ${headerToggles(true)}
         </div>
       </div>
-      <div class="p-6 max-w-5xl">
+      <div class="p-4 sm:p-6 max-w-5xl">
         ${currentAllowed ? (PAGE_RENDERERS[state.page] || PAGE_RENDERERS.dashboard)(role) : renderLockedNotice(currentItem ? L(T[currentItem.labelKey], lang) : state.page)}
       </div>
     </main>
@@ -310,18 +310,18 @@ function pageHeader(title, sub) {
   const lang = state.lang;
   return `
     <div class="mb-6">
-      <h2 class="ap-display text-2xl font-bold text-forest">${L(title, lang)}</h2>
+      <h2 class="ap-display text-xl sm:text-2xl font-bold text-forest">${L(title, lang)}</h2>
       ${sub ? `<p class="text-rope text-sm mt-1">${L(sub, lang)}</p>` : ""}
     </div>`;
 }
 
 function statCard(iconName, label, value) {
   return `
-    <div class="card p-5 flex items-center gap-4">
-      <div class="bg-forest rounded-lg p-3">${icon(iconName, 'style="width:22px;height:22px" class="text-cream"')}</div>
-      <div>
-        <div class="ap-display text-2xl font-bold text-forest">${value}</div>
-        <div class="text-rope text-sm">${label}</div>
+    <div class="card p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+      <div class="bg-forest rounded-lg p-2 sm:p-3 shrink-0">${icon(iconName, 'style="width:20px;height:20px" class="text-cream"')}</div>
+      <div class="min-w-0">
+        <div class="ap-display text-lg sm:text-2xl font-bold text-forest">${value}</div>
+        <div class="text-rope text-xs sm:text-sm truncate">${label}</div>
       </div>
     </div>`;
 }
