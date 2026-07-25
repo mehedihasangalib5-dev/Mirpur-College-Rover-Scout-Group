@@ -195,8 +195,6 @@ function renderFooter() {
         <div class="sc-eyebrow text-gold text-xs mb-3">${lang === "bn" ? "সদস্য" : "Members"}</div>
         <div class="flex flex-col gap-2 text-sm opacity-85">
           <button onclick="setPage('register')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "রেজিস্ট্রেশন" : "Registration"}</button>
-          <button onclick="setPage('portal')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal"}</button>
-          <button onclick="setPage('badges')" class="text-left" style="background:none;border:none;color:inherit;cursor:pointer;">${lang === "bn" ? "ব্যাজ" : "Badges"}</button>
         </div>
       </div>
       <div>
@@ -448,47 +446,6 @@ function pageNews() {
     </div>`;
 }
 
-function pageBadges() {
-  const lang = state.lang;
-  return `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-      ${sectionTitle(lang === "bn" ? "সম্মাননা" : "Honours", lang === "bn" ? "ব্যাজ ম্যানেজমেন্ট" : "Badge Management")}
-      <div class="flex flex-wrap gap-6 sm:gap-8">
-        ${BADGES.map((b, i) => patch(b.icon, L(b.name, lang), "", i % 2 ? "ember" : "gold", 110, i % 2 ? -4 : 4)).join("")}
-      </div>
-    </div>`;
-}
-
-function pageCamp() {
-  const lang = state.lang;
-  const teams = lang === "bn" ? ["ঈগল দল", "বাঘ দল", "ময়ূর দল", "সিংহ দল"] : ["Eagle Team", "Tiger Team", "Peacock Team", "Lion Team"];
-  const schedule = lang === "bn"
-    ? [["সকাল ৬:০০", "প্রার্থনা ও প্যারেড"], ["সকাল ৮:০০", "প্রাতঃরাশ"], ["সকাল ৯:৩০", "দক্ষতা প্রশিক্ষণ"], ["দুপুর ১:০০", "মধ্যাহ্নভোজ"], ["বিকাল ৪:০০", "খেলাধুলা"], ["সন্ধ্যা ৭:০০", "ক্যাম্পফায়ার"]]
-    : [["6:00 AM", "Prayer & Parade"], ["8:00 AM", "Breakfast"], ["9:30 AM", "Skills Training"], ["1:00 PM", "Lunch"], ["4:00 PM", "Sports"], ["7:00 PM", "Campfire"]];
-  const duties = lang === "bn"
-    ? ["রান্নাঘর দায়িত্ব — ঈগল দল", "পরিচ্ছন্নতা দায়িত্ব — বাঘ দল", "নিরাপত্তা দায়িত্ব — সিংহ দল"]
-    : ["Kitchen duty — Eagle Team", "Cleaning duty — Tiger Team", "Security duty — Lion Team"];
-  return `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-      ${sectionTitle(lang === "bn" ? "ব্যবস্থাপনা" : "Management", lang === "bn" ? "ক্যাম্প ম্যানেজমেন্ট" : "Camp Management")}
-      <div class="grid md:grid-cols-2 gap-6 md:gap-8">
-        ${card(`
-          <h4 class="sc-display font-bold text-forest mb-3">${L(UI.teamDivision, lang)}</h4>
-          <div class="flex flex-wrap gap-2">${teams.map(t => `<span class="bg-canvas text-forest text-sm px-3 py-1.5 rounded-full">${t}</span>`).join("")}</div>
-          <h4 class="sc-display font-bold text-forest mt-6 mb-3">${L(UI.dutyRoster, lang)}</h4>
-          <ul class="text-rope text-sm space-y-1">${duties.map(d => `<li>• ${d}</li>`).join("")}</ul>`)}
-        ${card(`
-          <h4 class="sc-display font-bold text-forest mb-3">${L(UI.campSchedule, lang)}</h4>
-          <ul class="text-sm space-y-2">${schedule.map(([t, a]) => `<li class="flex justify-between border-b border-rope border-opacity-20 pb-2"><span class="text-rope">${t}</span><span class="text-forest">${a}</span></li>`).join("")}</ul>`)}
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8">
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৩" : "3"}</div><div class="text-rope text-sm">${L(UI.activeCamps, lang)}</div>`, "text-center")}
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৯৪%" : "94%"}</div><div class="text-rope text-sm">${L(UI.avgAttendance, lang)}</div>`, "text-center")}
-        ${card(`<div class="sc-display text-3xl text-ember font-bold">${lang === "bn" ? "৫৪০+" : "540+"}</div><div class="text-rope text-sm">${L(UI.totalCamps, lang)}</div>`, "text-center")}
-      </div>
-    </div>`;
-}
-
 function pageAchievement() {
   const lang = state.lang;
   return `
@@ -645,53 +602,6 @@ function pageRegister() {
     </div>`;
 }
 
-function memberProfileCard(m, lang) {
-  const attendance = m.attendance || 0;
-
-  const infoBlock = `
-        <div class="grid sm:grid-cols-2 gap-4 text-sm">
-          <div><span class="text-rope">${L(UI.mobile, lang)}:</span> <span class="text-forest">${m.mobile || "—"}</span></div>
-          <div><span class="text-rope">${L(UI.email, lang)}:</span> <span class="text-forest">${m.email || "—"}</span></div>
-          <div><span class="text-rope">${L(UI.institution, lang)}:</span> <span class="text-forest">${L(m.inst, lang) || "—"}</span></div>
-          <div><span class="text-rope">${L(UI.joiningDate, lang)}:</span> <span class="text-forest">${L(m.joiningDate, lang)}</span></div>
-          <div><span class="text-rope">${L(UI.rank, lang)}:</span> <span class="text-forest">${L(m.rank, lang)}</span></div>
-          <div><span class="text-rope">${L(UI.certificates, lang)}:</span> <span class="text-forest">${m.badgeCount ? `${m.badgeCount} ${lang === "bn" ? "টি অর্জিত" : "earned"}` : L(UI.noBadgesYet, lang)}</span></div>
-        </div>
-        <div class="mt-5">
-          <div class="text-rope text-sm mb-1 flex justify-between"><span>${L(UI.attendanceRate, lang)}</span><span>${attendance}%</span></div>
-          <div class="w-full bg-canvas rounded-full h-2.5"><div class="bg-ember h-2.5 rounded-full" style="width:${attendance}%"></div></div>
-        </div>`;
-
-  return `
-    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
-      ${card(`
-        ${m.isNew ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(UI.newlyAdded, lang)}</div>` : ""}
-        <img src="${m.photo || `https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200`}" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
-        <h4 class="sc-display font-bold text-forest text-lg">${L(m.name, lang)}</h4>
-        <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: ${m.id}</div>
-        <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: ${m.blood || "—"}</div>`,
-        "md:col-span-1 flex flex-col items-center text-center")}
-      ${card(infoBlock, "md:col-span-2")}
-    </div>`;
-}
-
-function pageMemberPortal() {
-  const lang = state.lang;
-  return `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-      ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
-      <div class="space-y-10">
-        ${MEMBERS.length
-          ? MEMBERS.map((m) => memberProfileCard(m, lang)).join("")
-          : card(`<p class="text-rope text-center py-6">${L(UI.noMembersYet, lang)}</p>`)}
-      </div>
-      <h3 class="sc-display text-forest font-bold text-xl mt-12 mb-5">${L(UI.badgeCollection, lang)}</h3>
-      <div class="flex flex-wrap gap-4 sm:gap-6">
-        ${BADGES.slice(0, 5).map((b, i) => patch(b.icon, L(b.name, lang), "", "gold", 92, i % 2 ? 5 : -5)).join("")}
-      </div>
-    </div>`;
-}
-
 function pageLoginRedirect() {
   const lang = state.lang;
   return `
@@ -706,8 +616,7 @@ function pageLoginRedirect() {
 const PAGES = {
   home: pageHome, about: pageAbout, leadership: pageLeadership, contact: pageContact,
   gallery: pageGallery, downloads: pageDownloads, events: pageEvents, news: pageNews,
-  badges: pageBadges, camp: pageCamp, achievement: pageAchievement, register: pageRegister,
-  portal: pageMemberPortal, login: pageLoginRedirect,
+  achievement: pageAchievement, register: pageRegister, login: pageLoginRedirect,
 };
 
 /* ---------------- root render ---------------- */
