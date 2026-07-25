@@ -53,50 +53,6 @@ function stopAdminsListener() {
   if (adminsUnsub) { adminsUnsub(); adminsUnsub = null; }
 }
 
-/* ---- content collections shared with the public website ----
-   members / events / gallery / notices. These used to only live in
-   the in-memory `db` object (see app.js), which is why anything an
-   admin published/saved/deleted never showed up on the public site
-   and disappeared on refresh. Now they're kept live from Firestore,
-   the same way admins/roles already were, so:
-     - public visitors registering write into "members", and the
-       admin Members/Registrations pages read+write that same doc
-     - admin Events/Gallery/Notices pages write into their own
-       collections, which the public site listens to as well
-   See admin/FIREBASE-SETUP.md + public/MEMBER-FIREBASE-SETUP.md for
-   the Firestore Security Rules these collections need. */
-const MEMBERS_COLLECTION = "members";
-const EVENTS_COLLECTION = "events";
-const GALLERY_COLLECTION = "gallery";
-const NOTICES_COLLECTION = "notices";
-
-let membersUnsub = null, eventsUnsub = null, galleryUnsub = null, noticesUnsub = null;
-
-function startContentListeners() {
-  stopContentListeners();
-  membersUnsub = fsDb.collection(MEMBERS_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => { db.members = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })); render(); },
-    (err) => { console.error("members listener error:", err); /* table just stays empty/seed until rules are set */ }
-  );
-  eventsUnsub = fsDb.collection(EVENTS_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => { db.events = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })); render(); },
-    (err) => console.error("events listener error:", err)
-  );
-  galleryUnsub = fsDb.collection(GALLERY_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => { db.gallery = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })); render(); },
-    (err) => console.error("gallery listener error:", err)
-  );
-  noticesUnsub = fsDb.collection(NOTICES_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => { db.notices = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })); render(); },
-    (err) => console.error("notices listener error:", err)
-  );
-}
-
-function stopContentListeners() {
-  [membersUnsub, eventsUnsub, galleryUnsub, noticesUnsub].forEach((u) => { if (u) u(); });
-  membersUnsub = eventsUnsub = galleryUnsub = noticesUnsub = null;
-}
-
 async function fetchAdminRoleDoc(email) {
   const snap = await fsDb.collection(ADMINS_COLLECTION).doc(adminDocId(email)).get();
   return snap.exists ? snap.data() : null;
@@ -126,7 +82,6 @@ async function fbLogin(email, password) {
 
 async function fbLogout() {
   stopAdminsListener();
-  stopContentListeners();
   await fbAuth.signOut();
 }
 
@@ -175,7 +130,7 @@ fbAuth.onAuthStateChanged(async (user) => {
     state.loginError = "";
     state.page = "dashboard";
     startAdminsListener(); // also calls render() once data arrives
-    startContentListeners();
+    startContentListeners(); // members/applications/events/gallery/notices/certificates — see firebase-content.js
     render();
   } catch (err) {
     state.loginError = L(T.errGeneric, state.lang);
