@@ -280,8 +280,8 @@ function pageHome() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         ${sectionTitle(lang === "bn" ? "আপডেট" : "Updates", lang === "bn" ? "সাম্প্রতিক সংবাদ" : "Latest News")}
         <div class="grid md:grid-cols-3 gap-6">
-          ${NEWS.map(n => card(`
-            <div class="sc-eyebrow text-ember text-xs mb-2">${L(n.tag, lang)}</div>
+          ${NEWS.slice(0, 3).map(n => card(`
+            ${n.tag ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(n.tag, lang)}</div>` : ""}
             <h4 class="font-semibold text-forest mb-2">${L(n.title, lang)}</h4>
             <div class="text-rope text-sm flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>`)).join("")}
         </div>
@@ -291,10 +291,10 @@ function pageHome() {
     <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "সামনে যা আসছে" : "Coming Up", lang === "bn" ? "আসন্ন ইভেন্ট" : "Upcoming Events")}
       <div class="grid md:grid-cols-3 gap-6">
-        ${EVENTS.map(e => card(`
+        ${EVENTS.slice(0, 3).map(e => card(`
           <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
-          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>
-          <div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>
+          ${e.date ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>` : ""}
+          ${e.loc ? `<div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>` : ""}
           <button onclick="setPage('events')" class="btn-primary text-sm">${L(UI.registerBtn, lang)}</button>`)).join("")}
       </div>
     </section>
@@ -422,11 +422,11 @@ function pageEvents() {
       </div>
       <div class="grid md:grid-cols-3 gap-6">
         ${EVENTS.map(e => card(`
-          <img src="https://picsum.photos/seed/${L(e.title, lang).length}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
+          <img src="https://picsum.photos/seed/${String(L(e.title, lang)).length}${e.id || ""}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
           <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
-          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>
-          <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>
-          <div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("users", 'style="width:14px;height:14px"')}${L(UI.participants, lang)}: ${L(e.seats, lang)}</div>
+          ${e.date ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>` : ""}
+          ${e.loc ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>` : ""}
+          ${e.seats ? `<div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("users", 'style="width:14px;height:14px"')}${L(UI.participants, lang)}: ${L(e.seats, lang)}</div>` : ""}
           <button onclick="setPage('register')" class="btn-primary text-sm w-full">${L(UI.registerBtn, lang)}</button>`)).join("")}
       </div>
     </div>`;
@@ -439,7 +439,7 @@ function pageNews() {
       ${sectionTitle(lang === "bn" ? "প্রকাশনা" : "Publications", lang === "bn" ? "সংবাদ ও নোটিশ" : "News & Notices")}
       <div class="flex flex-col gap-4">
         ${NEWS.map(n => card(`
-          <div class="sc-eyebrow text-ember text-xs bg-canvas px-2 py-1 rounded flex-shrink-0">${L(n.tag, lang)}</div>
+          ${n.tag ? `<div class="sc-eyebrow text-ember text-xs bg-canvas px-2 py-1 rounded flex-shrink-0">${L(n.tag, lang)}</div>` : ""}
           <div>
             <h4 class="font-semibold text-forest">${L(n.title, lang)}</h4>
             <div class="text-rope text-sm mt-1 flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>
@@ -509,6 +509,7 @@ function pageAchievement() {
    to the old in-memory-only behaviour, so the site keeps working even
    before Firebase is connected. */
 const MEMBERS_COLLECTION = "members";
+const APPLICATIONS_COLLECTION = "applications";
 let membersUnsub = null;
 
 function fbMembersReady() {
@@ -533,58 +534,6 @@ function startMembersListener() {
     );
 }
 
-/* ---------------- Firestore sync for EVENTS / GALLERY / NEWS ----------------
-   Same pattern as startMembersListener() above: these collections are
-   written to from the admin panel (admin/js/pages.js). If Firebase isn't
-   configured yet, or the admin hasn't published anything, we simply keep
-   showing the built-in demo content above. */
-const EVENTS_COLLECTION = "events";
-const GALLERY_COLLECTION = "gallery";
-const NOTICES_COLLECTION = "notices";
-let eventsUnsub = null, galleryUnsub = null, noticesUnsub = null;
-
-function startEventsListener() {
-  if (!fbMembersReady() || eventsUnsub) return;
-  eventsUnsub = firebase.firestore().collection(EVENTS_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => {
-      if (snap.empty) return; // nothing published yet — keep demo EVENTS
-      EVENTS = snap.docs.map((doc) => {
-        const e = doc.data();
-        return { title: e.title || "", date: e.date || "", loc: e.location || "", seats: e.seats || "" };
-      });
-      render();
-    },
-    (err) => console.error("events listener error:", err)
-  );
-}
-
-function startGalleryListener() {
-  if (!fbMembersReady() || galleryUnsub) return;
-  galleryUnsub = firebase.firestore().collection(GALLERY_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => {
-      if (snap.empty) return; // nothing uploaded yet — keep demo GALLERY
-      GALLERY = snap.docs.map((doc) => doc.data().src).filter(Boolean);
-      render();
-    },
-    (err) => console.error("gallery listener error:", err)
-  );
-}
-
-function startNoticesListener() {
-  if (!fbMembersReady() || noticesUnsub) return;
-  noticesUnsub = firebase.firestore().collection(NOTICES_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => {
-      if (snap.empty) return; // nothing published yet — keep demo NEWS
-      NEWS = snap.docs.map((doc) => {
-        const n = doc.data();
-        return { title: n.title || "", date: n.date || "", tag: n.tag || "" };
-      });
-      render();
-    },
-    (err) => console.error("notices listener error:", err)
-  );
-}
-
 let registerForm = {};
 let registerSubmitted = false;
 let lastRegisteredMemberId = null;
@@ -606,17 +555,16 @@ function submitRegister() {
     badgeCount: 0,
     avatarSeed: newId,
     isNew: true,
-    status: "pending", // shows up under the admin panel's Registrations page until approved
   };
 
   if (fbMembersReady()) {
-    // Document ID = the Rover ID itself, so it's the same value everywhere.
-    firebase.firestore().collection(MEMBERS_COLLECTION).doc(newId).set({
+    // Goes into "applications" (pending) — an admin must Approve it in
+    // /admin > Applications before it becomes a real member. Document ID
+    // = the Rover ID itself, so it's the same value everywhere once approved.
+    firebase.firestore().collection(APPLICATIONS_COLLECTION).doc(newId).set({
       ...newMember,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    }).catch((err) => console.error("save member failed:", err));
-    // The onSnapshot listener above will add it to MEMBERS and re-render
-    // once Firestore confirms — no need to touch MEMBERS here.
+    }).catch((err) => console.error("save application failed:", err));
   } else {
     // Firebase not configured yet — keep the old local-only behaviour.
     MEMBERS.unshift(newMember);
