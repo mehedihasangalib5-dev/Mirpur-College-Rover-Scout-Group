@@ -54,8 +54,6 @@ const T = {
   m_exporttools: { bn: "এক্সপোর্ট / ব্যাকআপ", en: "Export / Backup" },
   m_auditlog: { bn: "অ্যাক্টিভিটি লগ", en: "Activity Log" },
   m_users: { bn: "ইউজার ম্যানেজমেন্ট", en: "User Management" },
-  m_permissions: { bn: "পারমিশন ম্যানেজমেন্ট", en: "Permission Management" },
-  m_roles: { bn: "রোল ম্যানেজমেন্ট", en: "Role Management" },
   m_settings: { bn: "ওয়েবসাইট সেটিংস", en: "Website Settings" },
 
   add: { bn: "যোগ করুন", en: "Add" },
@@ -123,10 +121,10 @@ const T = {
   colUser: { bn: "ইউজার", en: "User" },
   colActionCol: { bn: "অ্যাকশন", en: "Action" },
   colTarget: { bn: "টার্গেট", en: "Target" },
-  colIp: { bn: "আইপি", en: "IP" },
   colDetails: { bn: "বিস্তারিত", en: "Details" },
   filterByAction: { bn: "অ্যাকশন অনুযায়ী ফিল্টার", en: "Filter by action" },
   auditEmpty: { bn: "কোনো লগ পাওয়া যায়নি।", en: "No log entries found." },
+  auditNeedsFirebase: { bn: "প্রকৃত অ্যাক্টিভিটি লগ দেখতে ও রেকর্ড করতে Firebase কনফিগার করা থাকতে হবে (js/firebase-config.js)।", en: "Firebase must be configured (js/firebase-config.js) to record and view the real activity log." },
 
   pushSub: { bn: "ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রিপশন ও বার্তা প্রেরণ পরিচালনা করুন", en: "Manage browser push subscriptions and send alerts" },
   pushThisDevice: { bn: "এই ডিভাইসে পুশ নোটিফিকেশন", en: "Push notifications on this device" },
@@ -177,24 +175,23 @@ const T = {
   unlocked: { bn: "আনলক", en: "Unlocked" },
   colEmail: { bn: "ইমেইল", en: "Email" },
   colAddedBy: { bn: "যুক্ত করেছেন", en: "Added by" },
-  permsSub: { bn: "Editor রোলের অনুমতি তালিকা", en: "Permission list for the Editor role" },
-  colFeature: { bn: "ফিচার", en: "Feature" },
-  colPermission: { bn: "পারমিশন", en: "Permission" },
   allowed: { bn: "✔ অনুমোদিত", en: "✔ Allowed" },
-  denied: { bn: "✘ নিষিদ্ধ", en: "✘ Denied" },
-  featuresAccess: { bn: "টি ফিচারে প্রবেশাধিকার", en: "features accessible" },
 
   themeControl: { bn: "থিম নিয়ন্ত্রণ", en: "Theme Control" },
   logoChange: { bn: "লোগো / ব্যানার পরিবর্তন", en: "Change Logo / Banner" },
   generalInfo: { bn: "সাধারণ তথ্য", en: "General Info" },
   siteNamePh: { bn: "ওয়েবসাইটের নাম", en: "Website name" },
   contactEmailPh: { bn: "যোগাযোগ ইমেইল", en: "Contact email" },
+  save: { bn: "সংরক্ষণ করুন", en: "Save" },
+  saving: { bn: "সংরক্ষণ হচ্ছে...", en: "Saving..." },
+  settingsSaved: { bn: "সংরক্ষিত হয়েছে!", en: "Saved!" },
+  settingsLocalOnly: { bn: "Firebase কনফিগার করা নেই — পরিবর্তনগুলো শুধু এই ব্রাউজার সেশনে থাকবে, স্থায়ীভাবে সংরক্ষিত হবে না।", en: "Firebase isn't configured — changes will only apply to this browser session and won't be saved permanently." },
 };
 
 const ROLE_LABEL_KEY = { superadmin: "role_superadmin", leader: "role_leader", editor: "role_editor" };
 
 const PERMISSIONS = {
-  superadmin: new Set(["dashboard","members","registrations","events","gallery","notices","email","pushsettings","exporttools","auditlog","users","permissions","roles","settings","analytics"]),
+  superadmin: new Set(["dashboard","members","registrations","events","gallery","notices","email","pushsettings","exporttools","auditlog","users","settings","analytics"]),
   leader: new Set(["dashboard","members","registrations","events","gallery","notices","email","pushsettings","exporttools","analytics","users"]),
   editor: new Set(["dashboard","notices","gallery","events_create","files","messages","members_view"]),
 };
@@ -224,13 +221,18 @@ const SEED_TOP_INSTITUTIONS = [];
 
 const SEED_RECENT_REGS = [];
 
-const SEED_AUDIT_LOG = [];
-
 const SEED_NOTIFICATIONS = [];
 
 const ACTION_TAG = {
-  login_success: "ok", login_failed: "danger", member_added: "info", member_deleted: "danger",
-  permission_changed: "info", notice_published: "info",
+  login_success: "ok", login_failed: "danger", logout: "info",
+  member_added: "info", member_deleted: "danger",
+  application_approved: "ok", application_rejected: "danger",
+  event_added: "info", event_deleted: "danger",
+  gallery_added: "info", gallery_deleted: "danger",
+  notice_published: "info", notice_deleted: "danger",
+  push_sent: "info",
+  admin_role_granted: "info", admin_role_revoked: "danger",
+  settings_updated: "info",
 };
 
 function hashStr(str) {
@@ -297,15 +299,6 @@ const MENU = [
   { group: "groupSuperadmin", items: [
     { id: "auditlog", labelKey: "m_auditlog", icon: "history", perm: "auditlog" },
     { id: "users", labelKey: "m_users", icon: "user-cog", perm: "users" },
-    { id: "permissions", labelKey: "m_permissions", icon: "shield-check", perm: "permissions" },
-    { id: "roles", labelKey: "m_roles", icon: "clipboard-list", perm: "roles" },
     { id: "settings", labelKey: "m_settings", icon: "settings", perm: "settings" },
   ]},
-];
-
-const EDITOR_PERMISSION_TABLE = [
-  ["Publish News", true], ["Edit News", true], ["Manage Gallery", true], ["Create Events", true],
-  ["Upload Files", true], ["Reply Messages", true], ["View Members", true],
-  ["Edit Members", false], ["Delete Members", false], ["Change Website Settings", false],
-  ["Manage Admin Accounts", false], ["Access Database", false],
 ];
