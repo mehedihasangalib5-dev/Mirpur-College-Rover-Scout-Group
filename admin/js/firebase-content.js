@@ -5,7 +5,7 @@
    page-এ save বা delete হয় না".
 
    Root cause it fixes: Members / Events / Gallery / Notices /
-   Certificates / Applications used to live ONLY in the `db`
+   Applications used to live ONLY in the `db`
    object in memory (see app.js) — nothing was ever written to
    a real database, so a refresh (or the public site, which is
    a completely separate page) never saw the change.
@@ -23,7 +23,6 @@
      "events"        auto id             { title, createdAt }
      "gallery"       auto id             { src, createdAt }
      "notices"       auto id             { title, date, createdAt }
-     "certificates"  auto id             { member, title, type, date, code, createdAt }
 
    Falls back to the old local-only (in-memory) behaviour if
    js/firebase-config.js still has placeholder values, so the
@@ -35,7 +34,6 @@ const APPLICATIONS_COLLECTION = "applications";
 const EVENTS_COLLECTION = "events";
 const GALLERY_COLLECTION = "gallery";
 const NOTICES_COLLECTION = "notices";
-const CERTIFICATES_COLLECTION = "certificates";
 
 function fbContentReady() {
   return typeof firebase !== "undefined" && typeof firebase.firestore === "function";
@@ -80,11 +78,6 @@ function startContentListeners() {
   contentUnsubs.push(fsDb.collection(NOTICES_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
     (snap) => { db.notices = snap.docs.map((d) => ({ ...d.data(), id: d.id })); render(); },
     (err) => console.error("notices listener:", err)
-  ));
-
-  contentUnsubs.push(fsDb.collection(CERTIFICATES_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => { db.certificates = snap.docs.map((d) => ({ ...d.data(), id: d.id })); render(); },
-    (err) => console.error("certificates listener:", err)
   ));
 }
 
@@ -135,12 +128,3 @@ function fbPublishNotice(title, dateLabel) {
   });
 }
 function fbDeleteNotice(id) { return fsDb.collection(NOTICES_COLLECTION).doc(id).delete(); }
-
-/* ---------------- certificates ---------------- */
-
-function fbIssueCertificate(entry) {
-  return fsDb.collection(CERTIFICATES_COLLECTION).add({
-    ...entry, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
-}
-function fbDeleteCertificate(id) { return fsDb.collection(CERTIFICATES_COLLECTION).doc(id).delete(); }
