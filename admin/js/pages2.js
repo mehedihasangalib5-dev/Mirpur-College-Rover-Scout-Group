@@ -32,6 +32,7 @@ function sendPush() {
   if (!db.ui.pushTitle.trim()) return;
   const deviceCount = db.ui.pushRecipient === "all" ? db.members.length + 6 : 1;
   db.ui.pushSentInfo = deviceCount;
+  logActivity("push_sent", db.ui.pushTitle, `recipient=${db.ui.pushRecipient}`);
   db.notifications.unshift({ id: Date.now(), title: db.ui.pushTitle, body: db.ui.pushMessage, read: false, time: L(T.today, lang) });
   db.ui.pushTitle = ""; db.ui.pushMessage = "";
   render();
@@ -109,13 +110,15 @@ function auditNextPage(totalFiltered, pageSize) { if ((db.auditPage + 1) * pageS
 
 function pageAuditLog() {
   const lang = state.lang;
-  const pageSize = 4;
-  const actions = Array.from(new Set(SEED_AUDIT_LOG.map(l => l.action)));
-  const filtered = db.auditFilter ? SEED_AUDIT_LOG.filter(l => l.action === db.auditFilter) : SEED_AUDIT_LOG;
+  const pageSize = 8;
+  const log = db.auditLog || [];
+  const actions = Array.from(new Set(log.map(l => l.action)));
+  const filtered = db.auditFilter ? log.filter(l => l.action === db.auditFilter) : log;
   const pageRows = filtered.slice(db.auditPage * pageSize, db.auditPage * pageSize + pageSize);
   return `
     <div>
       ${pageHeader(T.m_auditlog, T.auditSub)}
+      ${!fbContentReady() ? `<div class="card p-4 mb-4 text-rope text-sm flex items-center gap-2">${icon("alert-triangle", 'style="width:14px;height:14px" class="text-ember flex-shrink-0"')}${L(T.auditNeedsFirebase, lang)}</div>` : ""}
       <div class="flex items-center gap-3 mb-4">
         ${icon("shield-alert", 'style="width:16px;height:16px" class="text-ember"')}
         <select class="input-field max-w-xs" onchange="setAuditFilter(this.value)">
@@ -132,7 +135,6 @@ function pageAuditLog() {
               <th class="text-left p-3">${L(T.colUser, lang)}</th>
               <th class="text-left p-3">${L(T.colActionCol, lang)}</th>
               <th class="text-left p-3">${L(T.colTarget, lang)}</th>
-              <th class="text-left p-3">${L(T.colIp, lang)}</th>
               <th class="text-left p-3">${L(T.colDetails, lang)}</th>
             </tr></thead>
             <tbody>
@@ -142,10 +144,10 @@ function pageAuditLog() {
                   <td class="p-3 text-forest">${l.user}</td>
                   <td class="p-3"><span class="tag-${ACTION_TAG[l.action] || "info"}">${l.action}</span></td>
                   <td class="p-3 text-rope">${l.target}</td>
-                  <td class="p-3 text-rope">${l.ip}</td>
                   <td class="p-3">
-                    <button class="text-ember text-xs flex items-center gap-1" style="background:none;border:none;text-decoration:underline;cursor:pointer" onclick="toggleAuditDetails(${l.id})">${icon("eye", 'style="width:12px;height:12px"')} ${L(T.view, lang)}</button>
-                    ${db.ui.auditOpenDetails === l.id ? `<pre class="text-xs bg-canvas rounded p-2 mt-1 max-w-xs overflow-x-auto">${l.details}</pre>` : ""}
+                    ${l.details ? `
+                    <button class="text-ember text-xs flex items-center gap-1" style="background:none;border:none;text-decoration:underline;cursor:pointer" onclick="toggleAuditDetails('${l.id}')">${icon("eye", 'style="width:12px;height:12px"')} ${L(T.view, lang)}</button>
+                    ${db.ui.auditOpenDetails === l.id ? `<pre class="text-xs bg-canvas rounded p-2 mt-1 max-w-xs overflow-x-auto">${l.details}</pre>` : ""}` : ""}
                   </td>
                 </tr>`).join("")}
             </tbody>
@@ -239,40 +241,64 @@ function pageUsers(role) {
     </div>`;
 }
 
-function pagePermissions() {
-  const lang = state.lang;
-  return `
-    <div>
-      ${pageHeader(T.m_permissions, T.permsSub)}
-      <div class="card overflow-hidden max-w-lg">
-        <table class="w-full text-sm">
-          <thead class="bg-canvas text-forest"><tr><th class="text-left p-3">${L(T.colFeature, lang)}</th><th class="text-left p-3">${L(T.colPermission, lang)}</th></tr></thead>
-          <tbody>
-            ${EDITOR_PERMISSION_TABLE.map(([f, ok]) => `
-              <tr class="border-t border-rope border-opacity-20">
-                <td class="p-3 text-forest">${f}</td>
-                <td class="p-3">${ok ? `<span class="tag-ok">${L(T.allowed, lang)}</span>` : `<span class="tag-no">${L(T.denied, lang)}</span>`}</td>
-              </tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
+function setSettingsSiteName(v) { db.ui.settingsSiteName = v; }
+function setSettingsContactEmail(v) { db.ui.settingsContactEmail = v; }
+
+function saveSettings() {
+  const siteName = (db.ui.settingsSiteName || "").trim();
+  const contactEmail = (db.ui.settingsContactEmail || "").trim();
+  if (!siteName || !contactEmail) return;
+  const payload = { siteName, contactEmail };
+
+  if (fbContentReady()) {
+    db.ui.settingsSaving = true; render();
+    fbSaveSettings(payload)
+      .then(() => logActivity("settings_updated", "general info", `siteName="${siteName}", contactEmail="${contactEmail}"`))
+      .then(() => {
+        db.ui.settingsSaving = false; db.ui.settingsSaved = true; render();
+        setTimeout(() => { db.ui.settingsSaved = false; render(); }, 2500);
+      })
+      .catch((e) => { db.ui.settingsSaving = false; render(); contentErr(e); });
+  } else {
+    db.settings = { ...db.settings, ...payload };
+    db.ui.settingsSaved = true; render();
+    setTimeout(() => { db.ui.settingsSaved = false; render(); }, 2500);
+  }
 }
 
-function pageRoles() {
-  const lang = state.lang;
-  return `
-    <div>
-      ${pageHeader(T.m_roles)}
-      <div class="grid sm:grid-cols-3 gap-4">
-        ${Object.entries(ROLE_LABEL_KEY).map(([key, labelKey]) => `
-          <div class="card p-5">
-            ${icon("shield-check", 'class="text-ember mb-2"')}
-            <div class="text-forest font-semibold">${L(T[labelKey], lang)}</div>
-            <div class="text-rope text-xs mt-1">${[...PERMISSIONS[key]].length} ${L(T.featuresAccess, lang)}</div>
-          </div>`).join("")}
-      </div>
-    </div>`;
+function triggerLogoUpload() { document.getElementById("logoFileInput").click(); }
+
+function handleLogoFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    alert(state.lang === "bn" ? "শুধু ছবি ফাইল আপলোড করা যাবে।" : "Only image files can be uploaded.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    if (fbContentReady()) {
+      if (dataUrl.length > 900000) {
+        alert(state.lang === "bn"
+          ? "ছবিটি অনেক বড় (Firestore-এর ১MB সীমার কাছাকাছি)। আরেকটু ছোট/কম রেজ্যুলেশনের ছবি দিয়ে আবার চেষ্টা করুন।"
+          : "This image is too large for Firestore's ~1MB document limit. Please try a smaller/lower-resolution photo.");
+        return;
+      }
+      db.ui.settingsLogoUploading = true; render();
+      fbSaveSettings({ logoUrl: dataUrl })
+        .then(() => logActivity("settings_updated", "logo/banner", "logo image changed"))
+        .then(() => { db.ui.settingsLogoUploading = false; render(); })
+        .catch((e) => { db.ui.settingsLogoUploading = false; render(); contentErr(e); });
+    } else {
+      db.settings.logoUrl = dataUrl; render();
+    }
+  };
+  reader.onerror = () => {
+    alert(state.lang === "bn" ? "ছবি পড়তে সমস্যা হয়েছে, আবার চেষ্টা করো।" : "Couldn't read that image, please try again.");
+  };
+  reader.readAsDataURL(file);
 }
 
 function pageSettings() {
@@ -289,15 +315,21 @@ function pageSettings() {
         </div>
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("image-plus", 'style="width:18px;height:18px" class="text-ember"')} ${L(T.logoChange, lang)}</div>
-          <input type="file" class="input-field mb-2" />
-          <button class="btn-primary text-sm">${L(T.upload, lang)}</button>
+          ${db.settings.logoUrl ? `<img src="${db.settings.logoUrl}" class="w-16 h-16 rounded-lg object-cover mb-3" alt="logo" />` : ""}
+          <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoFileSelected(event)" />
+          <button class="btn-primary text-sm" ${db.ui.settingsLogoUploading ? "disabled" : ""} onclick="triggerLogoUpload()">${db.ui.settingsLogoUploading ? L(T.saving, lang) : L(T.upload, lang)}</button>
         </div>
         <div class="card p-5 md:col-span-2">
           <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("settings", 'style="width:18px;height:18px" class="text-ember"')} ${L(T.generalInfo, lang)}</div>
           <div class="grid sm:grid-cols-2 gap-3">
-            <input class="input-field" placeholder="${L(T.siteNamePh, lang)}" value="মিরপুর কলেজ রোভার স্কাউট গ্রুপ" />
-            <input class="input-field" placeholder="${L(T.contactEmailPh, lang)}" value="info@nationalscout.org.bd" />
+            <input class="input-field" placeholder="${L(T.siteNamePh, lang)}" value="${db.ui.settingsSiteName}" oninput="setSettingsSiteName(this.value)" />
+            <input class="input-field" placeholder="${L(T.contactEmailPh, lang)}" value="${db.ui.settingsContactEmail}" oninput="setSettingsContactEmail(this.value)" />
           </div>
+          <div class="flex items-center gap-3 mt-4">
+            <button class="btn-primary text-sm flex items-center gap-2" ${db.ui.settingsSaving ? "disabled" : ""} onclick="saveSettings()">${icon("save", 'style="width:14px;height:14px"')} ${db.ui.settingsSaving ? L(T.saving, lang) : L(T.save, lang)}</button>
+            ${db.ui.settingsSaved ? `<span class="text-ok text-sm flex items-center gap-1">${icon("check-circle-2", 'style="width:14px;height:14px"')} ${L(T.settingsSaved, lang)}</span>` : ""}
+          </div>
+          ${!fbContentReady() ? `<p class="text-rope text-xs mt-3">${L(T.settingsLocalOnly, lang)}</p>` : ""}
         </div>
       </div>
     </div>`;
@@ -307,7 +339,7 @@ const PAGE_RENDERERS = {
   dashboard: pageDashboard, analytics: pageAnalytics, members: pageMembers, registrations: pageRegistrations,
   events: pageEvents, gallery: pageGallery, notices: pageNotices,
   email: pageEmail, pushsettings: pagePushSettings, exporttools: pageExportTools,
-  auditlog: pageAuditLog, users: pageUsers, permissions: pagePermissions, roles: pageRoles, settings: pageSettings,
+  auditlog: pageAuditLog, users: pageUsers, settings: pageSettings,
 };
 
 render();
