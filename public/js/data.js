@@ -64,6 +64,7 @@ const UI = {
   applicantRank: { bn: "আবেদনকারী (অনুমোদনের অপেক্ষায়)", en: "Applicant (pending approval)" },
   noBadgesYet: { bn: "এখনো কোনো ব্যাজ অর্জন করেনি", en: "No badges earned yet" },
   newlyAdded: { bn: "নতুন", en: "New" },
+  noMembersYet: { bn: "এখনো কোনো সদস্য নিবন্ধিত হয়নি। রেজিস্ট্রেশন ফর্ম পূরণ করলে এখানে প্রোফাইল দেখা যাবে।", en: "No members registered yet. Submit the registration form to see a profile here." },
 };
 
 const NAV_GROUPS = [
@@ -159,25 +160,15 @@ const ABOUT_BLOCKS = [
 /* ---------------- members (in-memory only — resets on page reload,
    not shared between visitors; there is no backend/database wired up
    yet, see admin/FIREBASE-SETUP.md to connect a real one) ---------------- */
-let MEMBERS = [
-  {
-    id: "MCRSG-2024-057",
-    name: { bn: "তানভীর আহমেদ", en: "Tanvir Ahmed" },
-    inst: { bn: "মিরপুর কলেজ", en: "Mirpur College" },
-    rank: { bn: "রোভার মেট", en: "Rover Mate" },
-    mobile: "+৮৮০ ১৭xx-xxxxxx",
-    email: "tanvir@example.com",
-    blood: "B+",
-    joiningDate: { bn: "১২ মার্চ, ২০২৪", en: "12 March 2024" },
-    attendance: 82,
-    badgeCount: 3,
-    avatarSeed: "mcrsg-member",
-  },
-];
+let MEMBERS = [];
 
 function nextMemberId() {
   const year = new Date().getFullYear();
-  return `MCRSG-${year}-${String(MEMBERS.length + 1).padStart(3, "0")}`;
+  // Timestamp-based suffix instead of MEMBERS.length, so two people
+  // registering at the same moment (from different browsers) don't get
+  // the same ID — MEMBERS.length isn't a safe counter once data comes
+  // from Firestore instead of a single local array.
+  return `MCRSG-${year}-${String(Date.now()).slice(-6)}`;
 }
 
 const REGISTER_FIELDS = [
