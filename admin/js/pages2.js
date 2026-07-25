@@ -96,15 +96,15 @@ function pagePushSettings() {
     <div>
       ${pageHeader(T.m_pushsettings, T.pushSub)}
 
-      <div class="card p-5 max-w-lg mb-6 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="bg-forest rounded-lg p-2.5">${icon("bell-ring", 'style="width:18px;height:18px" class="text-cream"')}</div>
-          <div>
-            <div class="text-forest font-medium">${L(T.pushThisDevice, lang)}</div>
+      <div class="card p-5 max-w-lg mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="bg-forest rounded-lg p-2.5 shrink-0">${icon("bell-ring", 'style="width:18px;height:18px" class="text-cream"')}</div>
+          <div class="min-w-0">
+            <div class="text-forest font-medium truncate">${L(T.pushThisDevice, lang)}</div>
             <div class="text-xs ${db.pushSubscribed ? "text-ok" : "text-rope"}">${db.pushSubscribed ? L(T.pushSubscribed, lang) : L(T.pushUnsubscribed, lang)}</div>
           </div>
         </div>
-        <button onclick="togglePushSubscribed()" class="${db.pushSubscribed ? "btn-danger" : "btn-primary"} text-sm">${db.pushSubscribed ? L(T.pushUnsubscribeBtn, lang) : L(T.pushSubscribeBtn, lang)}</button>
+        <button onclick="togglePushSubscribed()" class="${db.pushSubscribed ? "btn-danger" : "btn-primary"} text-sm w-full sm:w-auto">${db.pushSubscribed ? L(T.pushUnsubscribeBtn, lang) : L(T.pushSubscribeBtn, lang)}</button>
       </div>
 
       <div class="card p-5 max-w-lg mb-6">
