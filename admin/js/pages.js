@@ -134,7 +134,7 @@ function pageMembers(role) {
       ${pageHeader(T.m_members, editable ? T.membersSub : T.membersSubReadonly)}
       ${editable ? `<button class="btn-primary mb-4 flex items-center gap-2" onclick="toggleAddMember()">${icon("user-plus", 'style="width:16px;height:16px"')} ${L(T.m_members, lang)} ${L(T.add, lang)}</button>` : ""}
       ${(db.ui.showAddMember && editable) ? `
-        <div class="card p-4 mb-4 flex gap-3">
+        <div class="card p-4 mb-4 flex flex-col sm:flex-row gap-3">
           <input class="input-field" placeholder="${L(T.newMemberName, lang)}" oninput="updateNewMemberName(this.value)" />
           <button class="btn-primary" onclick="addMember()">${L(T.add, lang)}</button>
         </div>` : ""}
@@ -188,15 +188,15 @@ function pageRegistrations() {
       <div class="flex flex-col gap-3">
         ${db.applications.length === 0 ? `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>` : ""}
         ${db.applications.map(a => `
-          <div class="card p-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <div class="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
               <img src="${a.photo || `https://picsum.photos/seed/${encodeURIComponent(a.id)}/80/80`}" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="applicant" />
-              <div>
-                <div class="text-forest font-medium">${L(a.name, lang)}</div>
-                <div class="text-rope text-xs">${L(a.inst, lang)} · ${L(T.appliedOn, lang)}: ${applicationDate(a, lang)}</div>
+              <div class="min-w-0">
+                <div class="text-forest font-medium truncate">${L(a.name, lang)}</div>
+                <div class="text-rope text-xs truncate">${L(a.inst, lang)} · ${L(T.appliedOn, lang)}: ${applicationDate(a, lang)}</div>
               </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-shrink-0">
               <button class="btn-primary text-sm flex items-center gap-1" onclick="approveApplication('${a.id}')">${icon("check", 'style="width:14px;height:14px"')} ${L(T.approve, lang)}</button>
               <button class="btn-danger text-sm flex items-center gap-1" onclick="rejectApplication('${a.id}')">${icon("x", 'style="width:14px;height:14px"')} ${L(T.reject, lang)}</button>
             </div>
@@ -228,14 +228,14 @@ function pageEvents(role) {
     <div>
       ${pageHeader(T.m_events)}
       ${canCreate ? `
-        <div class="card p-4 mb-4 flex gap-3">
+        <div class="card p-4 mb-4 flex flex-col sm:flex-row gap-3">
           <input class="input-field" placeholder="${L(T.newEventName, lang)}" value="${db.ui.newEventTitle}" oninput="updateNewEventTitle(this.value)" />
           <button class="btn-primary" onclick="addEvent()">${L(T.add, lang)}</button>
         </div>` : ""}
       <div class="grid md:grid-cols-2 gap-4">
         ${db.events.map(e => `
-          <div class="card p-4 flex items-center justify-between gap-3">
-            <span class="text-forest">${L(e.title, lang)}</span>
+          <div class="card p-4 flex items-center justify-between gap-3 min-w-0">
+            <span class="text-forest truncate min-w-0">${L(e.title, lang)}</span>
             ${canCreate ? `<button onclick="deleteEvent('${e.id}')" class="btn-danger text-xs flex items-center gap-1 flex-shrink-0">${icon("trash-2", 'style="width:13px;height:13px"')} ${L(T.delete, lang)}</button>` : ""}
           </div>`).join("")}
       </div>
@@ -333,15 +333,15 @@ function pageNotices() {
   return `
     <div>
       ${pageHeader(T.m_notices)}
-      <div class="card p-4 mb-4 flex gap-3">
+      <div class="card p-4 mb-4 flex flex-col sm:flex-row gap-3">
         <input class="input-field" placeholder="${L(T.noticeTitleLabel, lang)}" value="${db.ui.noticeTitle}" oninput="updateNoticeTitle(this.value)" />
         <button class="btn-primary flex items-center gap-1" onclick="publishNotice()">${L(T.publish, lang)}</button>
       </div>
       <div class="flex flex-col gap-2">
         ${db.notices.map(n => `
-          <div class="card p-3 flex justify-between items-center">
-            <div class="text-forest">${L(n.title, lang)}</div>
-            <div class="flex items-center gap-3">
+          <div class="card p-3 flex justify-between items-center gap-2">
+            <div class="text-forest truncate min-w-0">${L(n.title, lang)}</div>
+            <div class="flex items-center gap-3 flex-shrink-0">
               <span class="text-rope text-xs">${n.date}</span>
               <button onclick="deleteNotice('${n.id}')" class="btn-danger text-xs flex items-center gap-1">${icon("trash-2", 'style="width:13px;height:13px"')}${L(T.delete, lang)}</button>
             </div>
