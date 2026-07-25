@@ -10,7 +10,7 @@ function L(obj, lang) {
 }
 
 const T = {
-  appName: { bn: "অ্যাডমিন প্যানেল", en: "Admin Panel" },
+  appName: { bn: "অ্যাডমিন প্যানেল", en: "Admin Pannel" },
   orgTag: { bn: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", en: "MIRPUR COLLEGE ROVER SCOUT GROUP" },
   toggleTheme: { bn: "থিম পরিবর্তন করুন", en: "Toggle theme" },
   toggleLang: { bn: "EN", en: "বাং" },
