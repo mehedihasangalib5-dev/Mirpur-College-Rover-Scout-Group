@@ -157,9 +157,12 @@ function pageRegistrations() {
         ${db.applications.length === 0 ? `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>` : ""}
         ${db.applications.map(a => `
           <div class="card p-4 flex items-center justify-between">
-            <div>
-              <div class="text-forest font-medium">${L(a.name, lang)}</div>
-              <div class="text-rope text-xs">${L(a.inst, lang)} · ${L(T.appliedOn, lang)}: ${applicationDate(a, lang)}</div>
+            <div class="flex items-center gap-3">
+              <img src="${a.photo || `https://picsum.photos/seed/${encodeURIComponent(a.id)}/80/80`}" class="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="applicant" />
+              <div>
+                <div class="text-forest font-medium">${L(a.name, lang)}</div>
+                <div class="text-rope text-xs">${L(a.inst, lang)} · ${L(T.appliedOn, lang)}: ${applicationDate(a, lang)}</div>
+              </div>
             </div>
             <div class="flex gap-2">
               <button class="btn-primary text-sm flex items-center gap-1" onclick="approveApplication('${a.id}')">${icon("check", 'style="width:14px;height:14px"')} ${L(T.approve, lang)}</button>
