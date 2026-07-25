@@ -366,7 +366,7 @@ function pageContact() {
               title="${lang === "bn" ? "মানচিত্র" : "Map"}"></iframe>
           </div>
           <a href="${ORG.mapLink}" target="_blank" rel="noopener" class="text-ember text-sm flex items-center gap-2 mb-4 hover:underline">
-            ${icon("map-pin", 'style="width:16px;height:16px"')} ${lang === "bn" ? "গুগল ম্যাপে দেখুন" : "Open in Google Maps"}
+            ${icon("map-pin", 'style="width:16px;height:16px"')} ${lang === "bn" ? "মিরপুর কলেজ, মিরপুর-২, ঢাকা-১২১৬" : "Mirpur Collge, Mirpur-2, Dhaka-1216"}
           </a>
           <div class="space-y-2 text-sm">
             <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
