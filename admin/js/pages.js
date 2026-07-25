@@ -167,8 +167,36 @@ function pageEvents(role) {
     </div>`;
 }
 
-function uploadNewPhoto() { db.gallery.push(`new${db.gallery.length}`); render(); }
-function deleteGalleryItem(seed) { db.gallery = db.gallery.filter(x => x !== seed); render(); }
+function triggerGalleryUpload() {
+  document.getElementById("galleryFileInput").click();
+}
+
+function handleGalleryFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ""; // allow selecting the same file again later
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    alert(state.lang === "bn" ? "শুধু ছবি ফাইল আপলোড করা যাবে।" : "Only image files can be uploaded.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    db.gallery.push(reader.result); // a data: URL of the actual chosen photo
+    render();
+  };
+  reader.onerror = () => {
+    alert(state.lang === "bn" ? "ছবি পড়তে সমস্যা হয়েছে, আবার চেষ্টা করো।" : "Couldn't read that image, please try again.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteGalleryItem(index) { db.gallery.splice(index, 1); render(); }
+
+function galleryImgSrc(item) {
+  // New uploads are real data: URLs; the original 3 demo entries are
+  // just picsum.photos seed names, kept working for backward-compat.
+  return item.startsWith("data:") || item.startsWith("http") ? item : `https://picsum.photos/seed/${item}/300/220`;
+}
 
 function pageGallery() {
   const lang = state.lang;
@@ -177,13 +205,14 @@ function pageGallery() {
       ${pageHeader(T.m_gallery)}
       <div class="card p-4 mb-4 flex items-center gap-3">
         ${icon("upload-cloud", 'style="width:20px;height:20px" class="text-ember"')}
-        <button class="btn-primary text-sm" onclick="uploadNewPhoto()">${L(T.uploadNewPhoto, lang)}</button>
+        <button class="btn-primary text-sm" onclick="triggerGalleryUpload()">${L(T.uploadNewPhoto, lang)}</button>
+        <input type="file" id="galleryFileInput" accept="image/*" style="display:none" onchange="handleGalleryFileSelected(event)" />
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        ${db.gallery.map(seed => `
+        ${db.gallery.map((item, i) => `
           <div class="relative">
-            <img src="https://picsum.photos/seed/${seed}/300/220" class="rounded-lg w-full h-28 object-cover" alt="gallery" />
-            <button onclick="deleteGalleryItem('${seed}')" class="absolute top-1 right-1 bg-forest text-cream rounded-full p-1">${icon("trash-2", 'style="width:12px;height:12px"')}</button>
+            <img src="${galleryImgSrc(item)}" class="rounded-lg w-full h-28 object-cover" alt="gallery" />
+            <button onclick="deleteGalleryItem(${i})" class="absolute top-1 right-1 bg-forest text-cream rounded-full p-1">${icon("trash-2", 'style="width:12px;height:12px"')}</button>
           </div>`).join("")}
       </div>
     </div>`;
