@@ -83,11 +83,8 @@ const NAV_GROUPS = [
     { id: "leadership", label: { bn: "নেতৃত্ব", en: "Leadership" }, icon: "shield-check" },
   ]},
   { title: { bn: "রোভার এলাকা", en: "Rover Area" }, items: [
-    { id: "portal", label: { bn: "রোভার পোর্টাল", en: "Rover Portal" }, icon: "user" },
     { id: "register", label: { bn: "অনলাইন রেজিস্ট্রেশন", en: "Online Registration" }, icon: "file-text" },
     { id: "events", label: { bn: "রোভারিং কার্যক্রম", en: "Rovering Activities" }, icon: "calendar" },
-    { id: "camp", label: { bn: "ক্যাম্প ম্যানেজমেন্ট", en: "Camp Management" }, icon: "tent" },
-    { id: "badges", label: { bn: "ব্যাজ ও প্রোগ্রেস", en: "Badges & Progress" }, icon: "award" },
     { id: "achievement", label: { bn: "অর্জন", en: "Achievements" }, icon: "trophy" },
   ]},
   { title: { bn: "রিসোর্স", en: "Resources" }, items: [
