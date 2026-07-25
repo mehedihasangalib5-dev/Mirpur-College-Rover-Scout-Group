@@ -5,6 +5,17 @@
 (Super Admin / Leader / Editor) সংরক্ষিত থাকে **Firestore**-এ, যাতে
 একাধিক ডিভাইস/ব্রাউজার থেকে সব admin-এর role একই থাকে।
 
+## ⚡ Publish/Save/Delete এখন Public সাইটে reflect হয় (নতুন)
+
+আগে Members, Events, Gallery, Notices, Certificates, Applications —
+এই সব ফিচারের Add/Edit/Delete/Publish শুধু ব্রাউজারের মেমোরিতে থাকত,
+কোথাও সেভ হতো না, আর Public সাইটের সাথে কোনো সংযোগই ছিল না। এখন এগুলো
+সবই real Firestore কালেকশনে সেভ হয় (`admin/js/firebase-content.js` ও
+`public/js/firebase-content.js` দেখুন) — তাই Admin panel-এ Publish বা
+Delete করলে Public সাইটে সাথে সাথেই সেটা দেখা যাবে/মুছে যাবে। এটা কাজ
+করার জন্য নিচের ধাপ ১-৪ (Firebase কনফিগার করা) এবং **ধাপ ৫-এর নতুন
+Security Rules** — দুটোই দরকার।
+
 ## ধাপ ১ — Firebase প্রজেক্ট তৈরি
 
 1. https://console.firebase.google.com এ যান, **Add project** করুন
@@ -54,33 +65,57 @@ Super Admin হিসেবে লগইন করতে পারবেন।
 
 ## ধাপ ৫ — Firestore Security Rules
 
-Firestore Database → **Rules** ট্যাবে গিয়ে নিচেরটা বসান (শুধুমাত্র
-লগইন করা admin-রাই `admins` কালেকশন পড়তে পারবে, আর শুধু superadmin
-role-এর কেউ নতুন করে লিখতে/মুছতে পারবে):
+Firestore Database → **Rules** ট্যাবে গিয়ে নিচেরটা বসান। এটা কভার করে:
+- `admins` — শুধু লগইন করা admin-রা পড়তে পারবে, শুধু superadmin লিখতে/মুছতে পারবে (আগের মতোই)
+- `members`, `events`, `gallery`, `notices`, `certificates` — **সবাই পড়তে পারবে** (Public ওয়েবসাইটে দেখানোর জন্য দরকার), কিন্তু **শুধু লগইন করা admin-রাই** লিখতে/মুছতে/এডিট করতে পারবে (এটাই Admin Panel-এর Publish/Save/Delete বাটনগুলো আসলে যেখানে সেভ হয়)
+- `applications` — যে কেউ (Public সাইটের রেজিস্ট্রেশন ফর্ম) নতুন আবেদন লিখতে পারবে, কিন্তু শুধু admin-রাই পড়তে/অনুমোদন/বাতিল করতে পারবে
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     match /admins/{emailId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
                    && exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
                    && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == "superadmin";
     }
+
+    match /members/{memberId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /gallery/{itemId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /certificates/{certId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /applications/{appId} {
+      allow create: if true;                    // public registration form
+      allow read, update, delete: if request.auth != null;  // admin only
+    }
   }
 }
 ```
 
-**Publish** চাপতে ভুলবেন না।
-
-⚠️ **এটা শুধু `admins` কালেকশনের rule।** Members/Registrations,
-Events, Gallery, ও Notices পেজগুলো থেকে Save/Publish/Delete করলে সেটা
-আসলেই সংরক্ষণ হওয়ার জন্য, আর পাবলিক ওয়েবসাইটেও দেখানোর জন্য, আরও
-কয়েকটা কালেকশনের (`members`, `events`, `gallery`, `notices`) rule
-লাগবে — সেই সম্পূর্ণ rules block-টা `public/MEMBER-FIREBASE-SETUP.md`
-এর "ধাপ ২" এ আছে, ওখান থেকে পুরোটা কপি করে বসান (এই `admins` অংশটাও
-তার ভেতরেই আছে, আলাদা করে দুইবার বসানোর দরকার নেই)।
+**Publish** চাপতে ভুলবেন না। Rules না বসালে Public সাইট থেকে ডেটা read করতে পারবে না (Console-এর Network ট্যাবে "Missing or insufficient permissions" এরর দেখাবে), এবং Admin Panel-এ Save/Delete চাপলেও কিছু হবে না।
 
 ## পরবর্তী অ্যাডমিন/এডিটর যোগ করা
 
