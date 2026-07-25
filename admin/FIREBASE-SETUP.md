@@ -16,6 +16,24 @@ Delete করলে Public সাইটে সাথে সাথেই সে�
 করার জন্য নিচের ধাপ ১-৪ (Firebase কনফিগার করা) এবং **ধাপ ৫-এর নতুন
 Security Rules** — দুটোই দরকার।
 
+## ⚡ Activity Log এখন real, এবং Settings-এ Save বাটন কাজ করে (নতুন)
+
+আগে **Activity Log** পেজ শুধু একটা খালি ডেমো লিস্ট দেখাত (কোনো real
+action কখনো লগ হতো না), আর **Website Settings** পেজে কোনো Save বাটনই
+ছিল না — ফিল্ড পরিবর্তন করলেও কিছু সেভ হতো না। এখন দুটোই real
+Firestore দিয়ে কাজ করে:
+
+- প্রতিটা গুরুত্বপূর্ণ অ্যাকশন (লগইন/লগআউট, member/event/gallery/notice
+  add-delete, application approve/reject, role grant/revoke, push
+  পাঠানো, settings পরিবর্তন) স্বয়ংক্রিয়ভাবে `activityLog` কালেকশনে
+  একটা এন্ট্রি লিখে, আর Activity Log পেজ সেটা লাইভ দেখায়।
+- Website Settings পেজে সাইটের নাম, যোগাযোগ ইমেইল ও লোগো এখন
+  **Save** বাটনে ক্লিক করলে `settings` কালেকশনে সত্যিই সংরক্ষিত হয়
+  (পেজ রিফ্রেশ করলেও থাকে)।
+
+এগুলো কাজ করার জন্যও নিচের ধাপ ১-৪ ও **ধাপ ৫-এর Security Rules**
+(যেখানে এখন `activityLog` ও `settings`-এর নিয়মও যোগ করা আছে) দরকার।
+
 ## ধাপ ১ — Firebase প্রজেক্ট তৈরি
 
 1. https://console.firebase.google.com এ যান, **Add project** করুন
@@ -69,6 +87,8 @@ Firestore Database → **Rules** ট্যাবে গিয়ে নিচে
 - `admins` — শুধু লগইন করা admin-রা পড়তে পারবে, শুধু superadmin লিখতে/মুছতে পারবে (আগের মতোই)
 - `members`, `events`, `gallery`, `notices`, `certificates` — **সবাই পড়তে পারবে** (Public ওয়েবসাইটে দেখানোর জন্য দরকার), কিন্তু **শুধু লগইন করা admin-রাই** লিখতে/মুছতে/এডিট করতে পারবে (এটাই Admin Panel-এর Publish/Save/Delete বাটনগুলো আসলে যেখানে সেভ হয়)
 - `applications` — যে কেউ (Public সাইটের রেজিস্ট্রেশন ফর্ম) নতুন আবেদন লিখতে পারবে, কিন্তু শুধু admin-রাই পড়তে/অনুমোদন/বাতিল করতে পারবে
+- `activityLog` — **Activity Log** পেজের real (fake নয়) ডেটা এখানে সেভ হয়: লগইন/লগআউট, member/event/gallery/notice add-delete, role change, settings change — সবকিছুর জন্য একটা করে entry। শুধু লগইন করা admin-রা পড়তে/লিখতে পারবে (তাই ভুল পাসওয়ার্ড দিয়ে লগইন ব্যর্থ হলে সেটা লগ হয় না — ওই মুহূর্তে কেউ authenticated থাকে না, এবং unauthenticated write খুলে দেওয়াটা স্প্যাম/টেম্পারিং-এর ঝুঁকি তৈরি করবে বলে ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছে)।
+- `settings` — Website Settings পেজের সাইটের নাম/যোগাযোগ ইমেইল/লোগো এখানে সেভ হয়। শুধু logged-in admin-রা পড়তে/লিখতে পারবে।
 
 ```
 rules_version = '2';
@@ -110,6 +130,15 @@ service cloud.firestore {
     match /applications/{appId} {
       allow create: if true;                    // public registration form
       allow read, update, delete: if request.auth != null;  // admin only
+    }
+
+    match /activityLog/{entryId} {
+      allow read, create: if request.auth != null;  // admin only — logged-in users can append entries
+      allow update, delete: if false;                // logs are append-only, never edited or deleted
+    }
+
+    match /settings/{docId} {
+      allow read, write: if request.auth != null;   // admin only
     }
   }
 }
