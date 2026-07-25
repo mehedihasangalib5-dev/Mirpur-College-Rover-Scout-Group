@@ -49,8 +49,6 @@ const T = {
   m_events: { bn: "ইভেন্ট", en: "Events" },
   m_gallery: { bn: "গ্যালারি", en: "Gallery" },
   m_notices: { bn: "নোটিশ / নিউজ", en: "Notices / News" },
-  m_certificates: { bn: "সার্টিফিকেট", en: "Certificates" },
-  m_qrcodes: { bn: "QR কোড ও উপস্থিতি", en: "QR Codes & Attendance" },
   m_email: { bn: "ইমেইল প্রেরণ", en: "Send Email" },
   m_pushsettings: { bn: "পুশ নোটিফিকেশন", en: "Push Notifications" },
   m_exporttools: { bn: "এক্সপোর্ট / ব্যাকআপ", en: "Export / Backup" },
@@ -79,12 +77,11 @@ const T = {
   prev: { bn: "পূর্ববর্তী", en: "Previous" },
   next: { bn: "পরবর্তী", en: "Next" },
 
-  dashSub: { bn: "সংগঠনের সার্বিক চিত্র", en: "An overview of the organization" },
+  dashSub: { bn: "মিরপুর কলেজ রোভার স্কাউট গ্রুপের সার্বিক চিত্র", en: "An overview of Mirpur College Rover Scout Group" },
   statMembers: { bn: "মোট সদস্য", en: "Total Members" },
   statEvents: { bn: "মোট ইভেন্ট", en: "Total Events" },
-  statAttendance: { bn: "আজকের উপস্থিতি", en: "Today's Attendance" },
+  statNotices: { bn: "প্রকাশিত নোটিশ", en: "Notices Published" },
   statPending: { bn: "মুলতুবি আবেদন", en: "Pending Applications" },
-  statCerts: { bn: "সার্টিফিকেট তৈরি", en: "Certificates Generated" },
 
   membersSub: { bn: "যোগ, সম্পাদনা ও মুছে ফেলা যাবে", en: "Add, edit, and remove members" },
   membersSubReadonly: { bn: "শুধুমাত্র দেখার অনুমতি", en: "View-only access" },
@@ -107,41 +104,16 @@ const T = {
   publish: { bn: "প্রকাশ করুন", en: "Publish" },
   today: { bn: "আজ", en: "Today" },
 
-  certSelectMember: { bn: "সদস্য নির্বাচন করুন", en: "Select member" },
-  certSelectPlaceholder: { bn: "— নির্বাচন করুন —", en: "— Select —" },
-  certTitleLabel: { bn: "সার্টিফিকেটের শিরোনাম", en: "Certificate title" },
-  certTitlePlaceholder: { bn: "যেমন: বার্ষিক ক্যাম্প অংশগ্রহণ সনদ", en: "e.g. Annual Camp Participation" },
-  certTypeLabel: { bn: "ধরন", en: "Type" },
-  certType_participation: { bn: "অংশগ্রহণ", en: "Participation" },
-  certType_completion: { bn: "সমাপনী", en: "Completion" },
-  certType_appreciation: { bn: "প্রশংসাপত্র", en: "Appreciation" },
-  certType_badge: { bn: "ব্যাজ অর্জন", en: "Badge Award" },
-  certDateLabel: { bn: "প্রদানের তারিখ", en: "Issue date" },
-  certGenerateBtn: { bn: "সার্টিফিকেট তৈরি করুন", en: "Generate Certificate" },
-  certGenerated: { bn: "সফলভাবে সার্টিফিকেট তৈরি হয়েছে", en: "Certificate generated successfully" },
-  certVerifyCode: { bn: "যাচাই কোড", en: "Verification Code" },
-  certIssuedList: { bn: "ইস্যুকৃত সার্টিফিকেট", en: "Issued Certificates" },
-  colType: { bn: "ধরন", en: "Type" },
-  colDate: { bn: "তারিখ", en: "Date" },
-  colVerifyCode: { bn: "যাচাই কোড", en: "Verify Code" },
-
-  qrSub: { bn: "সদস্য নির্বাচন করে QR কোড তৈরি করুন — উপস্থিতি স্ক্যানের জন্য ব্যবহার হবে", en: "Select members and generate QR codes for attendance scanning" },
-  qrSelectMembers: { bn: "সদস্য নির্বাচন করুন", en: "Select members" },
-  qrGenerateSelected: { bn: "নির্বাচিতদের QR তৈরি করুন", en: "Generate QR for selected" },
-  qrGenerateOne: { bn: "QR তৈরি করুন", en: "Generate QR" },
-  qrPreviewNote: { bn: "প্রিভিউ — প্রকৃত স্ক্যানযোগ্য কোডটি সার্ভার থেকে তৈরি হয়", en: "Preview only — the real scannable code is rendered server-side" },
-  qrEmpty: { bn: "কোনো সদস্য নির্বাচন করা হয়নি।", en: "No members selected yet." },
-  qrCardsTitle: { bn: "তৈরিকৃত আইডি কার্ড", en: "Generated ID Cards" },
-
-  analyticsSub: { bn: "সদস্য, উপস্থিতি ও কার্যক্রমের বিশ্লেষণ", en: "Insight into members, attendance, and activity" },
-  statActive: { bn: "সক্রিয় সদস্য", en: "Active Members" },
+  analyticsSub: { bn: "মিরপুর কলেজ রোভার স্কাউট গ্রুপের সদস্য ও কার্যক্রমের বিশ্লেষণ", en: "Insight into Mirpur College Rover Scout Group's members and activity" },
   statUpcoming: { bn: "আসন্ন ইভেন্ট", en: "Upcoming Events" },
-  chartMembersGrowth: { bn: "সদস্য বৃদ্ধি (গত ১২ মাস)", en: "Member Growth (last 12 months)" },
-  chartAttendance: { bn: "উপস্থিতির হার (গত ৩০ দিন)", en: "Attendance Rate (last 30 days)" },
+  chartMembersGrowth: { bn: "সদস্য বৃদ্ধি (মাসভিত্তিক)", en: "Member Growth (by month)" },
   chartGender: { bn: "লিঙ্গভিত্তিক বিভাজন", en: "Gender Breakdown" },
-  chartInstitutions: { bn: "শীর্ষ প্রতিষ্ঠান", en: "Top Institutions" },
+  chartRankDistribution: { bn: "র‍্যাংকভিত্তিক বিভাজন", en: "Rank Distribution" },
+  institutionNote: { bn: "প্রতিষ্ঠান", en: "Institution" },
+  institutionNoteBody: { bn: "মিরপুর কলেজ — এই গ্রুপের সকল সদস্যই এই একটি প্রতিষ্ঠানের", en: "Mirpur College — every member of this group belongs to this one institution" },
   recentRegs: { bn: "সাম্প্রতিক নিবন্ধন", en: "Recent Registrations" },
   colStatus: { bn: "অবস্থা", en: "Status" },
+  colDate: { bn: "তারিখ", en: "Date" },
   genMale: { bn: "ছেলে", en: "Male" },
   genFemale: { bn: "মেয়ে", en: "Female" },
   genUnspecified: { bn: "অনির্দিষ্ট", en: "Unspecified" },
@@ -222,127 +194,50 @@ const T = {
 const ROLE_LABEL_KEY = { superadmin: "role_superadmin", leader: "role_leader", editor: "role_editor" };
 
 const PERMISSIONS = {
-  superadmin: new Set(["dashboard","members","registrations","events","gallery","notices","certificates","qrcodes","email","pushsettings","exporttools","auditlog","users","permissions","roles","settings","analytics"]),
-  leader: new Set(["dashboard","members","registrations","events","gallery","notices","certificates","qrcodes","email","pushsettings","exporttools","analytics","users"]),
-  editor: new Set(["dashboard","notices","gallery","events_create","files","messages","members_view","qrcodes"]),
+  superadmin: new Set(["dashboard","members","registrations","events","gallery","notices","email","pushsettings","exporttools","auditlog","users","permissions","roles","settings","analytics"]),
+  leader: new Set(["dashboard","members","registrations","events","gallery","notices","email","pushsettings","exporttools","analytics","users"]),
+  editor: new Set(["dashboard","notices","gallery","events_create","files","messages","members_view"]),
 };
 
 function can(role, key) { return PERMISSIONS[role] && PERMISSIONS[role].has(key); }
 
+function bnNum(n, lang) {
+  const s = String(n);
+  return lang === "bn" ? s.replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[d]) : s;
+}
+
 /* ---------------- seed data ---------------- */
 
-const SEED_MEMBERS = [
-  { id: "MCRSG-1187", name: "তানভীর আহমেদ", inst: "মিরপুর কলেজ", rank: "রোভার মেট" },
-  { id: "MCRSG-1188", name: "সুমাইয়া রহমান", inst: "মিরপুর কলেজ", rank: "রোভার স্কাউট" },
-  { id: "MCRSG-1189", name: "রাকিব হাসান", inst: "মিরপুর কলেজ", rank: "রোভার স্কোয়ার" },
-];
+const SEED_MEMBERS = [];
 
-const SEED_APPLICATIONS = [
-  { id: 1, name: "মেহেদী হাসান", inst: "রাজউক কলেজ", date: "১৮ জুলাই, ২০২৬" },
-  { id: 2, name: "নুসরাত জাহান", inst: "হলিক্রস কলেজ", date: "২০ জুলাই, ২০২৬" },
-];
+const SEED_APPLICATIONS = [];
 
-const SEED_NOTICES = [
-  { id: 1, title: "বার্ষিক সাধারণ সভার নোটিশ", date: "২১ জুলাই, ২০২৬" },
-];
+const SEED_NOTICES = [];
 
-const SEED_CERTIFICATES = [
-  { id: 1, member: "তানভীর আহমেদ", title: "বার্ষিক ক্যাম্প অংশগ্রহণ সনদ", type: "participation", date: "১০ জুলাই, ২০২৬", code: "a19f2c7db1e04f6a" },
-  { id: 2, member: "সুমাইয়া রহমান", title: "নেতৃত্ব প্রশিক্ষণ সমাপনী সনদ", type: "completion", date: "০২ জুলাই, ২০২৬", code: "77e0b453cf2a19d8" },
-];
+const SEED_MEMBERS_OVER_TIME = [];
 
-const SEED_MEMBERS_OVER_TIME = [
-  { month: "আগ", count: 6 }, { month: "সেপ্ট", count: 9 }, { month: "অক্টো", count: 7 },
-  { month: "নভে", count: 12 }, { month: "ডিসে", count: 10 }, { month: "জানু", count: 14 },
-  { month: "ফেব্রু", count: 11 }, { month: "মার্চ", count: 16 }, { month: "এপ্রিল", count: 13 },
-  { month: "মে", count: 18 }, { month: "জুন", count: 15 }, { month: "জুলাই", count: 20 },
-];
+const SEED_ATTENDANCE_30D = [];
 
-const SEED_ATTENDANCE_30D = Array.from({ length: 30 }, (_, i) => ({
-  day: i + 1,
-  rate: 68 + Math.round(28 * Math.abs(Math.sin(i / 3.4)) + (i % 5) * 1.2),
-}));
+const SEED_GENDER = [];
 
-const SEED_GENDER = [
-  { key: "genMale", count: 78 }, { key: "genFemale", count: 46 }, { key: "genUnspecified", count: 4 },
-];
+const SEED_TOP_INSTITUTIONS = [];
 
-const SEED_TOP_INSTITUTIONS = [
-  { name: "ঢাকা কলেজ", count: 22 }, { name: "নটরডেম কলেজ", count: 18 },
-  { name: "ভিকারুননিসা স্কুল", count: 15 }, { name: "রাজউক কলেজ", count: 11 }, { name: "হলিক্রস কলেজ", count: 9 },
-];
+const SEED_RECENT_REGS = [];
 
-const SEED_RECENT_REGS = [
-  { name: "মেহেদী হাসান", scoutId: "MCRSG-2026-4471", status: "pending", date: "১৮ জুলাই, ২০২৬" },
-  { name: "নুসরাত জাহান", scoutId: "MCRSG-2026-4472", status: "pending", date: "২০ জুলাই, ২০২৬" },
-  { name: "তানভীর আহমেদ", scoutId: "MCRSG-1187", status: "active", date: "০৩ জুলাই, ২০২৬" },
-];
+const SEED_AUDIT_LOG = [];
 
-const SEED_AUDIT_LOG = [
-  { id: 1, user: "রফিকুল ইসলাম", action: "login_success", target: "—", ip: "103.94.21.10", time: "২৩ জুলাই, ২০২৬ ০৯:১২", details: "{}" },
-  { id: 2, user: "কামরুল হাসান", action: "member_added", target: "member #1189", ip: "103.94.21.44", time: "২২ জুলাই, ২০২৬ ১৮:০৩", details: '{"name":"রাকিব হাসান"}' },
-  { id: 3, user: "—", action: "login_failed", target: "—", ip: "45.132.9.201", time: "২২ জুলাই, ২০২৬ ১৪:২১", details: '{"reason":"bad_role_key"}' },
-  { id: 4, user: "রফিকুল ইসলাম", action: "certificate_issued", target: "certificate #2", ip: "103.94.21.10", time: "০২ জুলাই, ২০২৬ ১১:৪০", details: '{"member_id":"MCRSG-1188"}' },
-  { id: 5, user: "রফিকুল ইসলাম", action: "permission_changed", target: "role editor", ip: "103.94.21.10", time: "২৯ জুন, ২০২৬ ১৬:৫৫", details: '{"feature":"delete_member","value":false}' },
-  { id: 6, user: "ফারজানা ইয়াসমিন", action: "notice_published", target: "notice #1", ip: "103.94.31.18", time: "২১ জুলাই, ২০২৬ ১০:০৫", details: "{}" },
-];
-
-const SEED_NOTIFICATIONS = [
-  { id: 1, title: "বার্ষিক ক্যাম্পের রেজিস্ট্রেশন খোলা হয়েছে", body: "সকল সদস্যকে যোগ দেওয়ার আহ্বান জানানো হচ্ছে।", read: false, time: "২১ জুলাই, ২০২৬" },
-  { id: 2, title: "নতুন সার্টিফিকেট ইস্যু হয়েছে", body: "সুমাইয়া রহমানের জন্য একটি সার্টিফিকেট তৈরি হয়েছে।", read: true, time: "০২ জুলাই, ২০২৬" },
-];
+const SEED_NOTIFICATIONS = [];
 
 const ACTION_TAG = {
   login_success: "ok", login_failed: "danger", member_added: "info", member_deleted: "danger",
-  certificate_issued: "ok", permission_changed: "info", notice_published: "info",
+  permission_changed: "info", notice_published: "info",
 };
-
-/* ---------------- QR-like mosaic preview + helpers ---------------- */
 
 function hashStr(str) {
   let h = 0;
   str = str || "";
   for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
   return h;
-}
-
-function qrMatrix(text, size = 21) {
-  const h = hashStr(text || "MCRSG");
-  const rows = [];
-  for (let r = 0; r < size; r++) {
-    const row = [];
-    for (let c = 0; c < size; c++) {
-      const inFinder = (r < 7 && c < 7) || (r < 7 && c >= size - 7) || (r >= size - 7 && c < 7);
-      if (inFinder) { row.push(false); continue; }
-      const seed = (h ^ ((r + 1) * 928371 + (c + 1) * 68111)) >>> 0;
-      row.push(seed % 5 < 2);
-    }
-    rows.push(row);
-  }
-  return rows;
-}
-
-function qrCodeSvg(value, size = 132) {
-  const modules = 21;
-  const cell = size / modules;
-  const grid = qrMatrix(value, modules);
-  function finder(fx, fy) {
-    return `<rect x="${fx * cell}" y="${fy * cell}" width="${cell * 7}" height="${cell * 7}" fill="#1F2937" />
-      <rect x="${(fx + 1) * cell}" y="${(fy + 1) * cell}" width="${cell * 5}" height="${cell * 5}" fill="#fff" />
-      <rect x="${(fx + 2) * cell}" y="${(fy + 2) * cell}" width="${cell * 3}" height="${cell * 3}" fill="#1F2937" />`;
-  }
-  let cells = "";
-  grid.forEach((row, r) => row.forEach((on, c) => {
-    if (on) cells += `<rect x="${c * cell}" y="${r * cell}" width="${cell}" height="${cell}" fill="#1F2937" />`;
-  }));
-  return `
-    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="QR ${value}">
-      <rect width="${size}" height="${size}" fill="#fff" />
-      ${cells}
-      ${finder(0, 0)}
-      ${finder(modules - 7, 0)}
-      ${finder(0, modules - 7)}
-    </svg>`;
 }
 
 /* small pure-SVG charts — no extra dependency needed */
@@ -395,8 +290,6 @@ const MENU = [
     { id: "events", labelKey: "m_events", icon: "calendar", perm: "events", altPerm: "events_create" },
     { id: "gallery", labelKey: "m_gallery", icon: "image", perm: "gallery" },
     { id: "notices", labelKey: "m_notices", icon: "bell", perm: "notices" },
-    { id: "certificates", labelKey: "m_certificates", icon: "award", perm: "certificates" },
-    { id: "qrcodes", labelKey: "m_qrcodes", icon: "scan-line", perm: "qrcodes" },
     { id: "email", labelKey: "m_email", icon: "mail", perm: "email" },
     { id: "pushsettings", labelKey: "m_pushsettings", icon: "bell-ring", perm: "pushsettings" },
     { id: "exporttools", labelKey: "m_exporttools", icon: "file-spreadsheet", perm: "exporttools" },
@@ -412,7 +305,7 @@ const MENU = [
 
 const EDITOR_PERMISSION_TABLE = [
   ["Publish News", true], ["Edit News", true], ["Manage Gallery", true], ["Create Events", true],
-  ["Upload Files", true], ["Reply Messages", true], ["View Members", true], ["Generate QR Codes", true],
+  ["Upload Files", true], ["Reply Messages", true], ["View Members", true],
   ["Edit Members", false], ["Delete Members", false], ["Change Website Settings", false],
   ["Manage Admin Accounts", false], ["Access Database", false],
 ];
