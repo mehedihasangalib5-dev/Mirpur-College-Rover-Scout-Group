@@ -12,6 +12,7 @@ const state = {
   loginError: "",
   authLoading: true, // true until Firebase's onAuthStateChanged fires once
   loginSubmitting: false,
+  mobileSidebarOpen: false,
 };
 
 function normEmail(e) { return (e || "").trim().toLowerCase(); }
@@ -56,7 +57,8 @@ let pendingLoginAttempt = false;
 
 function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
 function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
-function setPage(p) { state.page = p; render(); }
+function setPage(p) { state.page = p; state.mobileSidebarOpen = false; render(); }
+function toggleMobileSidebar() { state.mobileSidebarOpen = !state.mobileSidebarOpen; render(); }
 
 function createIcons() { if (window.lucide) window.lucide.createIcons(); }
 function icon(name, opts = "") { return `<i data-lucide="${name}" ${opts}></i>`; }
@@ -241,13 +243,17 @@ function renderShell() {
 
   return `
   <div class="ap-root min-h-screen flex">
-    <aside class="bg-forest w-64 shrink-0 p-5 hidden md:flex md:flex-col">
-      <div class="flex items-center gap-2 mb-8">
-        <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:28px;height:28px;border-radius:6px;object-fit:cover" />
-        <div>
-          <div class="ap-display text-cream font-bold leading-none">${L(T.appName, lang)}</div>
-          <div class="ap-eyebrow text-gold text-xs mt-1">${L(T[ROLE_LABEL_KEY[role]], lang)}</div>
+    ${state.mobileSidebarOpen ? `<div class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="toggleMobileSidebar()"></div>` : ""}
+    <aside class="bg-forest w-64 shrink-0 p-5 flex flex-col fixed md:static inset-y-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out ${state.mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0">
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-2">
+          <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:28px;height:28px;border-radius:6px;object-fit:cover" />
+          <div>
+            <div class="ap-display text-cream font-bold leading-none">${L(T.appName, lang)}</div>
+            <div class="ap-eyebrow text-gold text-xs mt-1">${L(T[ROLE_LABEL_KEY[role]], lang)}</div>
+          </div>
         </div>
+        <button onclick="toggleMobileSidebar()" class="text-cream md:hidden" aria-label="close menu">${icon("x", 'style="width:22px;height:22px"')}</button>
       </div>
       <div class="flex flex-col gap-6 overflow-y-auto flex-1">
         ${MENU.map(group => {
@@ -273,15 +279,22 @@ function renderShell() {
       <button onclick="logout()" class="sidebar-item mt-2">${icon("log-out", 'style="width:16px;height:16px"')} ${L(T.logout, lang)}</button>
     </aside>
 
-    <main class="flex-1">
-      <div class="bg-canvas border-b border-rope border-opacity-20 px-6 py-3 flex items-center justify-between">
+    <main class="flex-1 min-w-0">
+      <div class="bg-forest px-4 py-3 flex items-center justify-between md:hidden">
+        <div class="flex items-center gap-2">
+          <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:24px;height:24px;border-radius:6px;object-fit:cover" />
+          <span class="ap-display text-cream font-bold text-sm">${L(T.appName, lang)}</span>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="text-cream" aria-label="open menu">${icon("menu", 'style="width:24px;height:24px"')}</button>
+      </div>
+      <div class="bg-canvas border-b border-rope border-opacity-20 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
         <span class="text-rope text-sm">${L(T.loggedInAs, lang)}: <span class="text-forest font-medium">${identifier}</span></span>
         <div class="flex items-center gap-4">
           <span class="ap-eyebrow text-xs text-ember">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
           ${headerToggles(true)}
         </div>
       </div>
-      <div class="p-6 max-w-5xl">
+      <div class="p-4 sm:p-6 max-w-5xl">
         ${currentAllowed ? (PAGE_RENDERERS[state.page] || PAGE_RENDERERS.dashboard)(role) : renderLockedNotice(currentItem ? L(T[currentItem.labelKey], lang) : state.page)}
       </div>
     </main>
