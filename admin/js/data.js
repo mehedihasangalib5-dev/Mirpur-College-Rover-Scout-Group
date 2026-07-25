@@ -177,13 +177,13 @@ const T = {
   colAddedBy: { bn: "যুক্ত করেছেন", en: "Added by" },
   allowed: { bn: "✔ অনুমোদিত", en: "✔ Allowed" },
 
-  themeControl: { bn: "থিম নিয়ন্ত্রণ", en: "Theme Control" },
   logoChange: { bn: "লোগো / ব্যানার পরিবর্তন", en: "Change Logo / Banner" },
   generalInfo: { bn: "সাধারণ তথ্য", en: "General Info" },
   siteNamePh: { bn: "ওয়েবসাইটের নাম", en: "Website name" },
   contactEmailPh: { bn: "যোগাযোগ ইমেইল", en: "Contact email" },
   save: { bn: "সংরক্ষণ করুন", en: "Save" },
   saving: { bn: "সংরক্ষণ হচ্ছে...", en: "Saving..." },
+  sending: { bn: "পাঠানো হচ্ছে...", en: "Sending..." },
   settingsSaved: { bn: "সংরক্ষিত হয়েছে!", en: "Saved!" },
   settingsLocalOnly: { bn: "Firebase কনফিগার করা নেই — পরিবর্তনগুলো শুধু এই ব্রাউজার সেশনে থাকবে, স্থায়ীভাবে সংরক্ষিত হবে না।", en: "Firebase isn't configured — changes will only apply to this browser session and won't be saved permanently." },
 };
