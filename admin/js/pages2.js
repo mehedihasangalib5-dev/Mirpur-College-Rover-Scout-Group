@@ -97,10 +97,107 @@ function pageExportTools() {
     <div>
       ${pageHeader(T.m_exporttools)}
       <div class="grid sm:grid-cols-2 gap-4 max-w-lg">
-        <button class="card p-5 flex items-center gap-3 text-forest" style="border:1px solid var(--surface-border);cursor:pointer">${icon("file-spreadsheet", 'class="text-ember"')} ${L(T.exportExcel, lang)}</button>
-        <button class="card p-5 flex items-center gap-3 text-forest" style="border:1px solid var(--surface-border);cursor:pointer">${icon("database", 'class="text-ember"')} ${L(T.exportBackup, lang)}</button>
+        <button onclick="exportToExcel()" class="card p-5 flex items-center gap-3 text-forest" style="border:1px solid var(--surface-border);cursor:pointer">${icon("file-spreadsheet", 'class="text-ember"')} ${L(T.exportExcel, lang)}</button>
+        <button onclick="exportBackup()" class="card p-5 flex items-center gap-3 text-forest" style="border:1px solid var(--surface-border);cursor:pointer">${icon("database", 'class="text-ember"')} ${L(T.exportBackup, lang)}</button>
       </div>
     </div>`;
+}
+
+/* ---------------- Export / Backup ---------------- */
+
+function backupTimestamp() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* Turns a Firestore-style row (which may contain {bn,en} label objects or
+   nested arrays/objects) into a flat, spreadsheet-friendly row. */
+function flattenForExcel(obj) {
+  const out = {};
+  Object.keys(obj || {}).forEach((k) => {
+    const v = obj[k];
+    if (v && typeof v === "object" && !Array.isArray(v) && (v.bn !== undefined || v.en !== undefined)) {
+      out[k] = L(v, state.lang);
+    } else if (v && typeof v === "object") {
+      out[k] = JSON.stringify(v);
+    } else {
+      out[k] = v;
+    }
+  });
+  return out;
+}
+
+function exportToExcel() {
+  if (typeof XLSX === "undefined") {
+    alert(state.lang === "bn"
+      ? "এক্সেল লাইব্রেরি লোড হয়নি — ইন্টারনেট সংযোগ পরীক্ষা করুন।"
+      : "Excel library failed to load — please check your internet connection.");
+    return;
+  }
+  try {
+    const wb = XLSX.utils.book_new();
+    const sheets = [
+      { name: "Members", rows: db.members },
+      { name: "Applications", rows: db.applications },
+      { name: "Events", rows: db.events },
+      { name: "Gallery", rows: db.gallery },
+      { name: "Notices", rows: db.notices },
+      { name: "Users", rows: [
+          ...db.invitedSuperAdmins.map((u) => ({ ...u, role: "superadmin" })),
+          ...db.invitedAdmins.map((u) => ({ ...u, role: "leader" })),
+          ...db.invitedEditors.map((u) => ({ ...u, role: "editor" })),
+        ] },
+    ];
+    sheets.forEach(({ name, rows }) => {
+      const cleanRows = (rows && rows.length ? rows : [{}]).map(flattenForExcel);
+      const ws = XLSX.utils.json_to_sheet(cleanRows);
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
+    XLSX.writeFile(wb, `mirpur-scout-export-${backupTimestamp()}.xlsx`);
+    logActivity("data_exported_excel", (state.session && state.session.identifier) || "—",
+      `${db.members.length} members, ${db.applications.length} applications, ${db.events.length} events`);
+  } catch (err) {
+    console.error(err);
+    alert(state.lang === "bn" ? "এক্সেল এক্সপোর্ট ব্যর্থ হয়েছে।" : "Excel export failed. Please try again.");
+  }
+}
+
+function exportBackup() {
+  try {
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      exportedBy: (state.session && state.session.identifier) || "—",
+      members: db.members,
+      applications: db.applications,
+      events: db.events,
+      gallery: db.gallery,
+      notices: db.notices,
+      settings: db.settings,
+      invitedSuperAdmins: db.invitedSuperAdmins,
+      invitedAdmins: db.invitedAdmins,
+      invitedEditors: db.invitedEditors,
+      auditLog: db.auditLog,
+    };
+    downloadFile(`mirpur-scout-backup-${backupTimestamp()}.json`, JSON.stringify(backup, null, 2), "application/json");
+    logActivity("database_backup_downloaded", (state.session && state.session.identifier) || "—",
+      `${db.members.length} members, ${db.events.length} events, ${db.notices.length} notices`);
+  } catch (err) {
+    console.error(err);
+    alert(state.lang === "bn" ? "ব্যাকআপ তৈরি করা যায়নি।" : "Could not create the backup. Please try again.");
+  }
 }
 
 function setAuditFilter(v) { db.auditFilter = v; db.auditPage = 0; render(); }
