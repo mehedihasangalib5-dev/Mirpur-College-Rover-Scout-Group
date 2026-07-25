@@ -303,7 +303,7 @@ function pageHome() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         ${sectionTitle(lang === "bn" ? "মুহূর্তগুলো" : "Moments", lang === "bn" ? "গ্যালারি" : "Gallery")}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          ${GALLERY_SEEDS.slice(0, 4).map(seed => `<img src="https://picsum.photos/seed/${seed}/400/300" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
+          ${GALLERY.slice(0, 4).map(item => `<img src="${galleryImgSrc(item)}" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
         </div>
       </div>
     </section>
@@ -366,7 +366,7 @@ function pageContact() {
               title="${lang === "bn" ? "মানচিত্র" : "Map"}"></iframe>
           </div>
           <a href="${ORG.mapLink}" target="_blank" rel="noopener" class="text-ember text-sm flex items-center gap-2 mb-4 hover:underline">
-            ${icon("map-pin", 'style="width:16px;height:16px"')} ${lang === "bn" ? "মিরপুর কলেজ, মিরপুর-২, ঢাকা-১২১৬" : "Mirpur Collge, Mirpur-2, Dhaka-1216"}
+            ${icon("map-pin", 'style="width:16px;height:16px"')} ${lang === "bn" ? "গুগল ম্যাপে দেখুন" : "Open in Google Maps"}
           </a>
           <div class="space-y-2 text-sm">
             <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
@@ -384,7 +384,7 @@ function pageGallery() {
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "স্মৃতির পাতা" : "Memories", lang === "bn" ? "গ্যালারি" : "Gallery")}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        ${GALLERY_SEEDS.map(seed => `<img src="https://picsum.photos/seed/${seed}/400/300" class="rounded-lg object-cover w-full h-32 sm:h-36" alt="scout gallery" />`).join("")}
+        ${GALLERY.map(item => `<img src="${galleryImgSrc(item)}" class="rounded-lg object-cover w-full h-32 sm:h-36" alt="scout gallery" />`).join("")}
       </div>
     </div>`;
 }
@@ -422,7 +422,7 @@ function pageEvents() {
       </div>
       <div class="grid md:grid-cols-3 gap-6">
         ${EVENTS.map(e => card(`
-          <img src="https://picsum.photos/seed/${e.title.bn.length}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
+          <img src="https://picsum.photos/seed/${L(e.title, lang).length}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
           <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
           <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>
           <div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>
@@ -533,6 +533,58 @@ function startMembersListener() {
     );
 }
 
+/* ---------------- Firestore sync for EVENTS / GALLERY / NEWS ----------------
+   Same pattern as startMembersListener() above: these collections are
+   written to from the admin panel (admin/js/pages.js). If Firebase isn't
+   configured yet, or the admin hasn't published anything, we simply keep
+   showing the built-in demo content above. */
+const EVENTS_COLLECTION = "events";
+const GALLERY_COLLECTION = "gallery";
+const NOTICES_COLLECTION = "notices";
+let eventsUnsub = null, galleryUnsub = null, noticesUnsub = null;
+
+function startEventsListener() {
+  if (!fbMembersReady() || eventsUnsub) return;
+  eventsUnsub = firebase.firestore().collection(EVENTS_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
+    (snap) => {
+      if (snap.empty) return; // nothing published yet — keep demo EVENTS
+      EVENTS = snap.docs.map((doc) => {
+        const e = doc.data();
+        return { title: e.title || "", date: e.date || "", loc: e.location || "", seats: e.seats || "" };
+      });
+      render();
+    },
+    (err) => console.error("events listener error:", err)
+  );
+}
+
+function startGalleryListener() {
+  if (!fbMembersReady() || galleryUnsub) return;
+  galleryUnsub = firebase.firestore().collection(GALLERY_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
+    (snap) => {
+      if (snap.empty) return; // nothing uploaded yet — keep demo GALLERY
+      GALLERY = snap.docs.map((doc) => doc.data().src).filter(Boolean);
+      render();
+    },
+    (err) => console.error("gallery listener error:", err)
+  );
+}
+
+function startNoticesListener() {
+  if (!fbMembersReady() || noticesUnsub) return;
+  noticesUnsub = firebase.firestore().collection(NOTICES_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
+    (snap) => {
+      if (snap.empty) return; // nothing published yet — keep demo NEWS
+      NEWS = snap.docs.map((doc) => {
+        const n = doc.data();
+        return { title: n.title || "", date: n.date || "", tag: n.tag || "" };
+      });
+      render();
+    },
+    (err) => console.error("notices listener error:", err)
+  );
+}
+
 let registerForm = {};
 let registerSubmitted = false;
 let lastRegisteredMemberId = null;
@@ -554,6 +606,7 @@ function submitRegister() {
     badgeCount: 0,
     avatarSeed: newId,
     isNew: true,
+    status: "pending", // shows up under the admin panel's Registrations page until approved
   };
 
   if (fbMembersReady()) {
@@ -704,4 +757,7 @@ function render() {
 }
 
 startMembersListener();
+startEventsListener();
+startGalleryListener();
+startNoticesListener();
 render();
