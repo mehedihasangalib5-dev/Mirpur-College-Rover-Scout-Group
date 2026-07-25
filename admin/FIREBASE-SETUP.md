@@ -74,6 +74,14 @@ service cloud.firestore {
 
 **Publish** চাপতে ভুলবেন না।
 
+⚠️ **এটা শুধু `admins` কালেকশনের rule।** Members/Registrations,
+Events, Gallery, ও Notices পেজগুলো থেকে Save/Publish/Delete করলে সেটা
+আসলেই সংরক্ষণ হওয়ার জন্য, আর পাবলিক ওয়েবসাইটেও দেখানোর জন্য, আরও
+কয়েকটা কালেকশনের (`members`, `events`, `gallery`, `notices`) rule
+লাগবে — সেই সম্পূর্ণ rules block-টা `public/MEMBER-FIREBASE-SETUP.md`
+এর "ধাপ ২" এ আছে, ওখান থেকে পুরোটা কপি করে বসান (এই `admins` অংশটাও
+তার ভেতরেই আছে, আলাদা করে দুইবার বসানোর দরকার নেই)।
+
 ## পরবর্তী অ্যাডমিন/এডিটর যোগ করা
 
 Admin Panel → **User Management** পেজ থেকে একজন সুপার অ্যাডমিন কোনো
