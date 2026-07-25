@@ -12,6 +12,7 @@ const state = {
   loginError: "",
   authLoading: true, // true until Firebase's onAuthStateChanged fires once
   loginSubmitting: false,
+  mobileSidebarOpen: false, // sidebar is an off-canvas drawer on mobile — see renderShell()
 };
 
 function normEmail(e) { return (e || "").trim().toLowerCase(); }
@@ -41,7 +42,7 @@ const db = {
   auditPage: 0,
   settings: { siteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", contactEmail: "info@nationalscout.org.bd", logoUrl: "" },
   ui: { showAddMember: false, newMemberName: "", newEventTitle: "", noticeTitle: "",
-        copied: false, emailSent: false,
+        copied: false, emailSent: false, emailSending: false, emailError: "",
         pushRecipient: "all", pushTitle: "", pushMessage: "", pushSentInfo: null,
         auditOpenDetails: null,
         settingsSiteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", settingsContactEmail: "info@nationalscout.org.bd",
@@ -56,7 +57,8 @@ let pendingLoginAttempt = false;
 
 function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
 function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
-function setPage(p) { state.page = p; render(); }
+function setPage(p) { state.page = p; state.mobileSidebarOpen = false; render(); }
+function toggleMobileSidebar() { state.mobileSidebarOpen = !state.mobileSidebarOpen; render(); }
 
 function createIcons() { if (window.lucide) window.lucide.createIcons(); }
 function icon(name, opts = "") { return `<i data-lucide="${name}" ${opts}></i>`; }
@@ -241,18 +243,21 @@ function renderShell() {
 
   return `
   <div class="ap-root min-h-screen flex">
-    <aside class="bg-forest w-64 shrink-0 p-5 hidden md:flex md:flex-col">
+    ${state.mobileSidebarOpen ? `<div class="fixed inset-0 bg-black/50 z-40 md:hidden" onclick="toggleMobileSidebar()"></div>` : ""}
+    <aside class="bg-forest w-64 shrink-0 p-5 ${state.mobileSidebarOpen ? "flex" : "hidden"} flex-col fixed inset-y-0 left-0 z-50 md:static md:flex md:flex-col">
       <div class="flex items-center gap-2 mb-8">
-        ${icon("compass", 'style="width:28px;height:28px" class="text-ember"')}
+        <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:28px;height:28px;object-fit:contain;border-radius:6px;flex-shrink:0" />
         <div>
           <div class="ap-display text-cream font-bold leading-none">${L(T.appName, lang)}</div>
           <div class="ap-eyebrow text-gold text-xs mt-1">${L(T[ROLE_LABEL_KEY[role]], lang)}</div>
         </div>
+        <button aria-label="close menu" onclick="toggleMobileSidebar()" class="icon-btn ml-auto md:hidden">${icon("x", 'style="width:16px;height:16px"')}</button>
       </div>
       <div class="flex flex-col gap-6 overflow-y-auto flex-1">
         ${MENU.map(group => {
-          const visibleItems = group.items.filter(it => role === "editor" ? hasAccess(it, role) : true);
-          if (role === "editor" && visibleItems.length === 0) return "";
+          const hideLocked = role === "editor" || role === "leader";
+          const visibleItems = group.items.filter(it => hideLocked ? hasAccess(it, role) : true);
+          if (hideLocked && visibleItems.length === 0) return "";
           return `
             <div>
               <div class="ap-eyebrow text-gold text-xs mb-2 opacity-70">${L(T[group.group], lang)}</div>
@@ -273,9 +278,12 @@ function renderShell() {
       <button onclick="logout()" class="sidebar-item mt-2">${icon("log-out", 'style="width:16px;height:16px"')} ${L(T.logout, lang)}</button>
     </aside>
 
-    <main class="flex-1">
+    <main class="flex-1 min-w-0">
       <div class="bg-canvas border-b border-rope border-opacity-20 px-6 py-3 flex items-center justify-between">
-        <span class="text-rope text-sm">${L(T.loggedInAs, lang)}: <span class="text-forest font-medium">${identifier}</span></span>
+        <div class="flex items-center gap-3">
+          <button aria-label="menu" onclick="toggleMobileSidebar()" class="icon-btn md:hidden">${icon("menu", 'style="width:18px;height:18px"')}</button>
+          <span class="text-rope text-sm">${L(T.loggedInAs, lang)}: <span class="text-forest font-medium">${identifier}</span></span>
+        </div>
         <div class="flex items-center gap-4">
           <span class="ap-eyebrow text-xs text-ember">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
           ${headerToggles(true)}
