@@ -28,6 +28,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null
+             && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
     match /admins/{emailId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
@@ -38,8 +43,22 @@ service cloud.firestore {
     match /members/{memberId} {
       allow read: if true;
       allow create: if true;
-      allow update: if false;
-      allow delete: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /gallery/{itemId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
@@ -47,14 +66,27 @@ service cloud.firestore {
 
 **Publish** চাপতে ভুলো না।
 
+⚠️ এই rules block-টা আগের ভার্সন থেকে আপডেট করা হয়েছে — এখন
+`members` কালেকশনে **logged-in admin-রা** (Admin Panel দিয়ে) সদস্য
+এডিট/মুছতে এবং আবেদন অনুমোদন/বাতিল করতে পারবে (আগে এটা পুরোপুরি বন্ধ
+ছিল, যার কারণে Admin Panel-এর কোনো Save/Delete-ই আসলে কোথাও সংরক্ষণ
+হতো না)। সাধারণ ভিজিটররা (লগইন ছাড়া) আগের মতোই শুধু নতুন রেজিস্ট্রেশন
+যোগ করতে পারবে, এডিট/মুছতে পারবে না। এই একই rules block-এ `events`,
+`gallery`, ও `notices` কালেকশনও যোগ করা হয়েছে — Admin Panel-এর
+Events/Gallery/Notices পেজগুলো থেকে Publish/Delete করলে এখন সেগুলো
+পাবলিক ওয়েবসাইটেও দেখা যাবে (সব ভিজিটর পড়তে পারবে, শুধু admin-রা
+লিখতে/মুছতে পারবে)।
+
 ## নিরাপত্তা নোট
 
-`allow update: if false` মানে — কোনো ভিজিটর ব্রাউজার থেকে কোনো
-প্রোফাইল এডিট করতে পারবে না (শুধু নতুন রেজিস্ট্রেশন যোগ করতে পারবে,
-`allow create: if true`)। প্রোফাইল এডিট এখন শুধু তুমি নিজে Firebase
-Console → Firestore Database → `members` কালেকশনে গিয়ে সরাসরি করবে
-— Console-এ প্রজেক্ট মালিক হিসেবে ঢুকলে এই security rules প্রযোজ্য হয়
-না, তাই তুমি সবসময় edit/delete করতে পারবে।
+আগে `allow update: if false` / `allow delete: if false` ছিল — কেউই
+(এমনকি admin-ও) সাইট থেকে কোনো প্রোফাইল এডিট বা মোছা যেত না। এখন শুধু
+লগইন করা admin/leader/editor অ্যাকাউন্ট (যাদের ইমেইল `admins`
+কালেকশনে আছে) সেটা করতে পারবে। ভিজিটররা (লগইন ছাড়া ব্রাউজার থেকে)
+এখনো এডিট/মুছতে পারবে না। প্রয়োজনে Firebase Console → Firestore
+Database → `members`/`events`/`gallery`/`notices` কালেকশনে গিয়ে সরাসরি
+এডিট/মুছেও করা যায় — Console-এ প্রজেক্ট মালিক হিসেবে ঢুকলে security
+rules প্রযোজ্য হয় না।
 
 ## ধাপ ৩ — টেস্ট করো
 
