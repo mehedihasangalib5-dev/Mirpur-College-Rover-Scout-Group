@@ -34,6 +34,9 @@ const APPLICATIONS_COLLECTION = "applications";
 const EVENTS_COLLECTION = "events";
 const GALLERY_COLLECTION = "gallery";
 const NOTICES_COLLECTION = "notices";
+const ACTIVITY_LOG_COLLECTION = "activityLog";
+const SETTINGS_COLLECTION = "settings";
+const SETTINGS_DOC_ID = "site";
 
 function fbContentReady() {
   return typeof firebase !== "undefined" && typeof firebase.firestore === "function";
@@ -79,6 +82,9 @@ function startContentListeners() {
     (snap) => { db.notices = snap.docs.map((d) => ({ ...d.data(), id: d.id })); render(); },
     (err) => console.error("notices listener:", err)
   ));
+
+  startActivityLogListener();
+  startSettingsListener();
 }
 
 /* ---------------- members ---------------- */
@@ -128,3 +134,80 @@ function fbPublishNotice(title, dateLabel) {
   });
 }
 function fbDeleteNotice(id) { return fsDb.collection(NOTICES_COLLECTION).doc(id).delete(); }
+
+/* ---------------- activity log (real, Firestore-backed) ----------------
+   Every meaningful admin action (login, logout, add/delete/publish/
+   approve/reject, role changes, settings changes) writes one document
+   here via logActivity(). The Audit Log page (pagesAuditLog) just
+   renders whatever this collection contains live — nothing on that
+   page is fake/seed data anymore. Firestore security rules should
+   restrict both read and write to `request.auth != null` (see
+   FIREBASE-SETUP.md), which is why failed-login attempts before a
+   successful sign-in generally can't be written here. */
+
+function logActivity(action, target, details) {
+  if (!fbContentReady()) return Promise.resolve();
+  const user = (state.session && state.session.identifier) || target || "—";
+  return fsDb.collection(ACTIVITY_LOG_COLLECTION).add({
+    action, target: target || "", details: details || "", user,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }).catch((err) => console.error("activity log write failed:", err));
+}
+
+function startActivityLogListener() {
+  if (!fbContentReady()) return;
+  contentUnsubs.push(fsDb.collection(ACTIVITY_LOG_COLLECTION).orderBy("createdAt", "desc").limit(200).onSnapshot(
+    (snap) => {
+      db.auditLog = snap.docs.map((d) => {
+        const data = d.data();
+        const dt = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
+        return {
+          id: d.id,
+          time: dt ? dt.toLocaleString(state.lang === "bn" ? "bn-BD" : "en-GB") : "…",
+          user: data.user || "—",
+          action: data.action || "—",
+          target: data.target || "",
+          details: data.details || "",
+        };
+      });
+      render();
+    },
+    (err) => console.error("activity log listener:", err)
+  ));
+}
+
+/* ---------------- website settings ---------------- */
+
+let settingsLoadedOnce = false;
+
+function fbSaveSettings(fields) {
+  return fsDb.collection(SETTINGS_COLLECTION).doc(SETTINGS_DOC_ID).set(
+    { ...fields, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+}
+
+function startSettingsListener() {
+  if (!fbContentReady()) return;
+  settingsLoadedOnce = false;
+  contentUnsubs.push(fsDb.collection(SETTINGS_COLLECTION).doc(SETTINGS_DOC_ID).onSnapshot(
+    (doc) => {
+      const data = doc.exists ? doc.data() : {};
+      db.settings = {
+        siteName: data.siteName || db.settings.siteName,
+        contactEmail: data.contactEmail || db.settings.contactEmail,
+        logoUrl: data.logoUrl || "",
+      };
+      // only overwrite the editable form fields on the FIRST snapshot,
+      // so we don't clobber text the admin is actively typing if the
+      // listener happens to fire again mid-edit
+      if (!settingsLoadedOnce) {
+        db.ui.settingsSiteName = db.settings.siteName;
+        db.ui.settingsContactEmail = db.settings.contactEmail;
+        settingsLoadedOnce = true;
+      }
+      render();
+    },
+    (err) => console.error("settings listener:", err)
+  ));
+}
