@@ -1,9 +1,10 @@
 # Member Portal — Firebase (Firestore) সেটআপ গাইড
 
-এখন রেজিস্ট্রেশন ফর্ম সাবমিট করলে Firestore-এ সেভ হওয়ার জন্য কোড রেডি
-করা আছে (প্রোফাইল এডিট সাইট থেকে করা যায় না — সরাসরি Firebase Console
-থেকে করবে, নিচে বলা আছে)। শুধু নিচের ধাপগুলো অনুসরণ করে তোমার Firebase
-প্রজেক্টের সাথে যুক্ত করে দাও।
+এখন রেজিস্ট্রেশন ফর্ম সাবমিট করলে Firestore-এর `applications`
+কালেকশনে (pending) সেভ হয় — Admin Panel-এর **Applications** পেজ থেকে
+Approve করলেই সেটা আসল `members` কালেকশনে চলে যায় এবং Public সাইট
+জুড়ে (Member Portal-সহ) দেখা যায়; Reject করলে মুছে যায়। শুধু নিচের
+ধাপগুলো অনুসরণ করে তোমার Firebase প্রজেক্টের সাথে যুক্ত করে দাও।
 
 **Firebase project আগে থেকেই আছে** — admin panel এর জন্য
 (`admin/FIREBASE-SETUP.md` দেখো)। সেই **একই প্রজেক্ট** এখানেও ব্যবহার
@@ -20,82 +21,33 @@ Firebase Console → তোমার প্রজেক্ট → ⚙️ Project
 
 ## ধাপ ২ — Firestore Security Rules
 
-Firebase Console → Firestore Database → **Rules** ট্যাবে গিয়ে
-`admins` কালেকশনের rule এর পাশে `members` কালেকশনের জন্য এটা যোগ করো:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAdmin() {
-      return request.auth != null
-             && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
-    }
-
-    match /admins/{emailId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
-                   && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == "superadmin";
-    }
-
-    match /members/{memberId} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if isAdmin();
-    }
-
-    match /events/{eventId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /gallery/{itemId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /notices/{noticeId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-  }
-}
-```
-
-**Publish** চাপতে ভুলো না।
-
-⚠️ এই rules block-টা আগের ভার্সন থেকে আপডেট করা হয়েছে — এখন
-`members` কালেকশনে **logged-in admin-রা** (Admin Panel দিয়ে) সদস্য
-এডিট/মুছতে এবং আবেদন অনুমোদন/বাতিল করতে পারবে (আগে এটা পুরোপুরি বন্ধ
-ছিল, যার কারণে Admin Panel-এর কোনো Save/Delete-ই আসলে কোথাও সংরক্ষণ
-হতো না)। সাধারণ ভিজিটররা (লগইন ছাড়া) আগের মতোই শুধু নতুন রেজিস্ট্রেশন
-যোগ করতে পারবে, এডিট/মুছতে পারবে না। এই একই rules block-এ `events`,
-`gallery`, ও `notices` কালেকশনও যোগ করা হয়েছে — Admin Panel-এর
-Events/Gallery/Notices পেজগুলো থেকে Publish/Delete করলে এখন সেগুলো
-পাবলিক ওয়েবসাইটেও দেখা যাবে (সব ভিজিটর পড়তে পারবে, শুধু admin-রা
-লিখতে/মুছতে পারবে)।
+পুরো rules block-টা (সব কালেকশন — `admins`, `members`, `events`,
+`gallery`, `notices`, `certificates`, `applications`) admin panel-এর
+`admin/FIREBASE-SETUP.md`-এর ধাপ ৫-এ দেওয়া আছে — সেটাই একবার বসিয়ে
+দিলে এই public সাইটের সব ফিচার (রেজিস্ট্রেশন, Member Portal, Events,
+Gallery, News/Notices) সব একসাথে কাজ করবে, আলাদা করে কিছু বসাতে হবে
+না।
 
 ## নিরাপত্তা নোট
 
-আগে `allow update: if false` / `allow delete: if false` ছিল — কেউই
-(এমনকি admin-ও) সাইট থেকে কোনো প্রোফাইল এডিট বা মোছা যেত না। এখন শুধু
-লগইন করা admin/leader/editor অ্যাকাউন্ট (যাদের ইমেইল `admins`
-কালেকশনে আছে) সেটা করতে পারবে। ভিজিটররা (লগইন ছাড়া ব্রাউজার থেকে)
-এখনো এডিট/মুছতে পারবে না। প্রয়োজনে Firebase Console → Firestore
-Database → `members`/`events`/`gallery`/`notices` কালেকশনে গিয়ে সরাসরি
-এডিট/মুছেও করা যায় — Console-এ প্রজেক্ট মালিক হিসেবে ঢুকলে security
-rules প্রযোজ্য হয় না।
+visitor ব্রাউজার থেকে সরাসরি `members` কালেকশনে কিছু লিখতে/এডিট
+করতে পারে না — শুধু `applications`-এ নতুন pending আবেদন তৈরি করতে
+পারে (`allow create`)। সেটাকে `members`-এ move করা হয় শুধুমাত্র
+লগইন করা admin-এর Approve বাটন থেকে। প্রোফাইল এডিট এখনও সরাসরি
+সাইট থেকে করা যায় না — দরকার হলে Firebase Console → Firestore
+Database → `members` কালেকশনে গিয়ে সরাসরি করতে হবে (Console-এ
+প্রজেক্ট মালিক হিসেবে ঢুকলে security rules প্রযোজ্য হয় না)।
 
 ## ধাপ ৩ — টেস্ট করো
 
 1. `public/js/firebase-config.js` এ মান বসানোর পর সাইট রিলোড করো
    (localhost অথবা লাইভ ডোমেইন)।
 2. রেজিস্ট্রেশন ফর্ম পূরণ করে সাবমিট করো।
-3. Firebase Console → Firestore Database এ গিয়ে দেখো `members`
-   কালেকশনে নতুন একটা document তৈরি হয়েছে কিনা।
-4. Member Portal পেজে গিয়ে দেখো প্রোফাইলটা দেখাচ্ছে কিনা।
+3. Firebase Console → Firestore Database এ গিয়ে দেখো `applications`
+   কালেকশনে নতুন একটা pending document তৈরি হয়েছে কিনা।
+4. Admin Panel → Applications পেজে গিয়ে ওই আবেদনটা Approve করো —
+   এবার `members` কালেকশনে সেটা চলে যাবে এবং Member Portal পেজে
+   প্রোফাইলটা দেখাবে।
 5. Firebase Console → Firestore Database → `members` কালেকশনে গিয়ে
    ওই document-এর কোনো field (যেমন mobile) পরিবর্তন করে Save করো —
    Member Portal পেজে ফিরে গিয়ে (রিলোড ছাড়াই) দেখো পরিবর্তনটা সাথে
@@ -109,8 +61,11 @@ rules প্রযোজ্য হয় না।
   সাথে Firestore এর `members` কালেকশনে লাইভ শুনতে শুরু করে
   (`onSnapshot`) — কেউ নতুন করে যোগ/এডিট করলে সাথে সাথে সব ভিজিটরের
   পেজেও আপডেট হয়ে যাবে, রিলোড ছাড়াই।
-- `submitRegister()` Firestore এ নতুন document লেখে (`.doc(rovId).set(...)`),
-  document এর ID-ই Rover ID।
+- `submitRegister()` Firestore এর `applications` কালেকশনে নতুন
+  document লেখে (`.doc(rovId).set(...)`), document এর ID-ই Rover ID।
+- Admin Panel-এর Approve বাটন সেই document-টাকে `members`
+  কালেকশনে কপি করে `applications` থেকে মুছে দেয়
+  (`admin/js/firebase-content.js` এর `fbApproveApplication`)।
 - প্রোফাইল edit/delete সাইট থেকে করা যায় না (rules এ বন্ধ) — শুধু
   Firebase Console থেকে করতে হবে।
 - যদি `firebase-config.js` এখনো বসানো না থাকে (placeholder মান),
