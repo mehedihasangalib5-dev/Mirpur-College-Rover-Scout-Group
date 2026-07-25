@@ -8,9 +8,8 @@
    other half of the fix for "publish/save/delete করলে public
    page-এ reflect হয় না".
 
-   Falls back to the built-in demo content (NEWS_SEED /
-   EVENTS_SEED / GALLERY_SEED in js/data.js) until
-   js/firebase-config.js has real values.
+   Until js/firebase-config.js has real values, EVENTS/NEWS/GALLERY
+   simply stay empty (no demo seed content is shown).
 --------------------------------------------------------- */
 
 const EVENTS_COLLECTION = "events";
@@ -22,7 +21,7 @@ function fbContentReady() {
 }
 
 function startEventsListener() {
-  if (!fbContentReady()) return; // no firebase-config.js values yet — stay on EVENTS_SEED
+  if (!fbContentReady()) return; // no firebase-config.js values yet — EVENTS stays empty
   firebase.firestore().collection(EVENTS_COLLECTION).orderBy("createdAt", "desc").onSnapshot(
     (snap) => { EVENTS = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id })); render(); },
     (err) => console.error("events listener error:", err)
