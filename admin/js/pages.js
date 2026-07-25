@@ -79,52 +79,32 @@ function pageAnalytics() {
 
 function toggleAddMember() { db.ui.showAddMember = !db.ui.showAddMember; render(); }
 function updateNewMemberName(v) { db.ui.newMemberName = v; }
-
-function newMemberId() {
-  const year = new Date().getFullYear();
-  return `MCRSG-${year}-${String(Date.now()).slice(-6)}`;
-}
-
-async function addMember() {
+function addMember() {
   const name = db.ui.newMemberName.trim();
   if (!name) return;
-  const id = newMemberId();
-  const member = {
-    name, inst: "মিরপুর কলেজ", rank: "রোভার স্কোয়ার", status: "active",
-  };
-  try {
-    await fsDb.collection(MEMBERS_COLLECTION).doc(id).set({
-      ...member, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    // the members listener (firebase-auth.js) will add it to db.members
-    // and re-render once Firestore confirms.
-  } catch (err) {
-    console.error("add member failed:", err);
-    alert(state.lang === "bn" ? "সদস্য যোগ করা যায়নি — Firestore নিয়মাবলী (Rules) ঠিকভাবে সেট করা আছে কিনা দেখুন।" : "Couldn't add the member — check your Firestore Security Rules.");
+  if (fbContentReady()) {
+    fbAddMember(name).catch(contentErr); // listener updates db.members + re-renders on success
+  } else {
+    db.members.push({ id: `MCRSG-${1190 + db.members.length}`, name, inst: "মিরপুর কলেজ", rank: "রোভার স্কোয়ার" });
   }
   db.ui.newMemberName = ""; db.ui.showAddMember = false; render();
 }
-
-async function deleteMember(id) {
-  try {
-    await fsDb.collection(MEMBERS_COLLECTION).doc(id).delete();
-  } catch (err) {
-    console.error("delete member failed:", err);
-    alert(state.lang === "bn" ? "সদস্য মোছা যায়নি — Firestore নিয়মাবলী (Rules) ঠিকভাবে সেট করা আছে কিনা দেখুন।" : "Couldn't delete the member — check your Firestore Security Rules.");
-  }
+function deleteMember(id) {
+  if (fbContentReady()) { fbDeleteMember(id).catch(contentErr); }
+  else { db.members = db.members.filter(x => x.id !== id); }
+  render();
 }
 
 function pageMembers(role) {
   const lang = state.lang;
   const editable = can(role, "members");
-  const activeMembers = db.members.filter(m => m.status !== "pending");
   return `
     <div>
       ${pageHeader(T.m_members, editable ? T.membersSub : T.membersSubReadonly)}
       ${editable ? `<button class="btn-primary mb-4 flex items-center gap-2" onclick="toggleAddMember()">${icon("user-plus", 'style="width:16px;height:16px"')} ${L(T.m_members, lang)} ${L(T.add, lang)}</button>` : ""}
       ${(db.ui.showAddMember && editable) ? `
         <div class="card p-4 mb-4 flex gap-3">
-          <input class="input-field" placeholder="${L(T.newMemberName, lang)}" value="${db.ui.newMemberName}" oninput="updateNewMemberName(this.value)" />
+          <input class="input-field" placeholder="${L(T.newMemberName, lang)}" oninput="updateNewMemberName(this.value)" />
           <button class="btn-primary" onclick="addMember()">${L(T.add, lang)}</button>
         </div>` : ""}
       <div class="card overflow-hidden overflow-x-auto">
@@ -134,7 +114,7 @@ function pageMembers(role) {
             <th class="text-left p-3">${L(T.colInstitution, lang)}</th><th class="text-left p-3">${L(T.colRank, lang)}</th><th class="text-left p-3">${L(T.colAction, lang)}</th>
           </tr></thead>
           <tbody>
-            ${activeMembers.map(m => `
+            ${db.members.map(m => `
               <tr class="border-t border-rope border-opacity-20">
                 <td class="p-3 text-rope">${m.id}</td>
                 <td class="p-3 text-forest">${L(m.name, lang)}</td>
@@ -151,46 +131,35 @@ function pageMembers(role) {
     </div>`;
 }
 
-/* Registrations = members whose public registration hasn't been
-   approved yet (status: "pending", set by public/js/app.js's
-   submitRegister()). Approving flips the status to "active" (so it
-   shows up on the Members page + the public Rover Portal); rejecting
-   deletes the member document entirely. */
-
-async function approveApplication(id) {
-  try {
-    await fsDb.collection(MEMBERS_COLLECTION).doc(id).update({
-      status: "active",
-      rank: { bn: "রোভার স্কোয়ার", en: "Rover Squire" },
-    });
-  } catch (err) {
-    console.error("approve failed:", err);
-    alert(state.lang === "bn" ? "অনুমোদন করা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't approve — check your Firestore Security Rules.");
-  }
+function approveApplication(id) {
+  const app = db.applications.find(x => x.id == id);
+  if (!app) return;
+  if (fbContentReady()) { fbApproveApplication(app).catch(contentErr); }
+  else { db.applications = db.applications.filter(x => x.id != id); }
+  render();
 }
-
-async function rejectApplication(id) {
-  try {
-    await fsDb.collection(MEMBERS_COLLECTION).doc(id).delete();
-  } catch (err) {
-    console.error("reject failed:", err);
-    alert(state.lang === "bn" ? "বাতিল করা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't reject — check your Firestore Security Rules.");
-  }
+function rejectApplication(id) {
+  if (fbContentReady()) { fbRejectApplication(id).catch(contentErr); }
+  else { db.applications = db.applications.filter(x => x.id != id); }
+  render();
+}
+function applicationDate(a, lang) {
+  if (a.createdAt && a.createdAt.toDate) return a.createdAt.toDate().toLocaleDateString(lang === "bn" ? "bn-BD" : "en-GB");
+  return L(a.joiningDate, lang) || a.date || "";
 }
 
 function pageRegistrations() {
   const lang = state.lang;
-  const pending = db.members.filter(m => m.status === "pending");
   return `
     <div>
       ${pageHeader(T.m_registrations, T.regSub)}
       <div class="flex flex-col gap-3">
-        ${pending.length === 0 ? `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>` : ""}
-        ${pending.map(a => `
+        ${db.applications.length === 0 ? `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>` : ""}
+        ${db.applications.map(a => `
           <div class="card p-4 flex items-center justify-between">
             <div>
               <div class="text-forest font-medium">${L(a.name, lang)}</div>
-              <div class="text-rope text-xs">${L(a.inst, lang)}${a.mobile ? " · " + a.mobile : ""}</div>
+              <div class="text-rope text-xs">${L(a.inst, lang)} · ${L(T.appliedOn, lang)}: ${applicationDate(a, lang)}</div>
             </div>
             <div class="flex gap-2">
               <button class="btn-primary text-sm flex items-center gap-1" onclick="approveApplication('${a.id}')">${icon("check", 'style="width:14px;height:14px"')} ${L(T.approve, lang)}</button>
@@ -202,32 +171,18 @@ function pageRegistrations() {
 }
 
 function updateNewEventTitle(v) { db.ui.newEventTitle = v; }
-function updateNewEventDate(v) { db.ui.newEventDate = v; }
-function updateNewEventLocation(v) { db.ui.newEventLocation = v; }
-
-async function addEvent() {
+function addEvent() {
   const title = db.ui.newEventTitle.trim();
   if (!title) return;
-  try {
-    await fsDb.collection(EVENTS_COLLECTION).add({
-      title, date: db.ui.newEventDate.trim(), location: db.ui.newEventLocation.trim(),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    db.ui.newEventTitle = ""; db.ui.newEventDate = ""; db.ui.newEventLocation = "";
-  } catch (err) {
-    console.error("add event failed:", err);
-    alert(state.lang === "bn" ? "ইভেন্ট যোগ করা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't add the event — check your Firestore Security Rules.");
-  }
+  if (fbContentReady()) { fbAddEvent(title).catch(contentErr); }
+  else { db.events.push({ id: `local-${Date.now()}`, title }); }
+  db.ui.newEventTitle = "";
   render();
 }
-
-async function deleteEvent(id) {
-  try {
-    await fsDb.collection(EVENTS_COLLECTION).doc(id).delete();
-  } catch (err) {
-    console.error("delete event failed:", err);
-    alert(state.lang === "bn" ? "ইভেন্ট মোছা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't delete the event — check your Firestore Security Rules.");
-  }
+function deleteEvent(id) {
+  if (fbContentReady()) { fbDeleteEvent(id).catch(contentErr); }
+  else { db.events = db.events.filter(e => e.id !== id); }
+  render();
 }
 
 function pageEvents(role) {
@@ -237,20 +192,15 @@ function pageEvents(role) {
     <div>
       ${pageHeader(T.m_events)}
       ${canCreate ? `
-        <div class="card p-4 mb-4 flex flex-col sm:flex-row gap-3">
+        <div class="card p-4 mb-4 flex gap-3">
           <input class="input-field" placeholder="${L(T.newEventName, lang)}" value="${db.ui.newEventTitle}" oninput="updateNewEventTitle(this.value)" />
-          <input class="input-field" placeholder="${lang === "bn" ? "তারিখ" : "Date"}" value="${db.ui.newEventDate}" oninput="updateNewEventDate(this.value)" />
-          <input class="input-field" placeholder="${lang === "bn" ? "স্থান" : "Location"}" value="${db.ui.newEventLocation}" oninput="updateNewEventLocation(this.value)" />
-          <button class="btn-primary shrink-0" onclick="addEvent()">${L(T.add, lang)}</button>
+          <button class="btn-primary" onclick="addEvent()">${L(T.add, lang)}</button>
         </div>` : ""}
       <div class="grid md:grid-cols-2 gap-4">
         ${db.events.map(e => `
-          <div class="card p-4 flex items-start justify-between gap-3">
-            <div>
-              <div class="text-forest font-medium">${e.title}</div>
-              ${e.date || e.location ? `<div class="text-rope text-xs mt-1">${[e.date, e.location].filter(Boolean).join(" · ")}</div>` : ""}
-            </div>
-            ${canCreate ? `<button onclick="deleteEvent('${e.id}')" class="btn-danger text-xs flex items-center gap-1 shrink-0">${icon("trash-2", 'style="width:13px;height:13px"')} ${L(T.delete, lang)}</button>` : ""}
+          <div class="card p-4 flex items-center justify-between gap-3">
+            <span class="text-forest">${L(e.title, lang)}</span>
+            ${canCreate ? `<button onclick="deleteEvent('${e.id}')" class="btn-danger text-xs flex items-center gap-1 flex-shrink-0">${icon("trash-2", 'style="width:13px;height:13px"')} ${L(T.delete, lang)}</button>` : ""}
           </div>`).join("")}
       </div>
     </div>`;
@@ -269,21 +219,22 @@ function handleGalleryFileSelected(event) {
     return;
   }
   const reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      // Stored as a data: URL of the actual chosen photo. Note: Firestore
-      // documents are capped at 1MB, so very large/high-res photos can
-      // fail to upload — for a production site, switch this to Firebase
-      // Storage and save the download URL here instead.
-      await fsDb.collection(GALLERY_COLLECTION).add({
-        src: reader.result,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (err) {
-      console.error("gallery upload failed:", err);
-      alert(state.lang === "bn" ? "ছবি আপলোড করা যায়নি — ছবিটি অনেক বড় অথবা Firestore নিয়মাবলী (Rules) ঠিক নেই।" : "Couldn't upload the photo — it may be too large, or your Firestore Security Rules aren't set up yet.");
+  reader.onload = () => {
+    const dataUrl = reader.result; // a data: URL of the actual chosen photo
+    if (fbContentReady()) {
+      // Firestore documents are capped at ~1MiB — warn before a large
+      // photo fails to save instead of silently doing nothing.
+      if (dataUrl.length > 900000) {
+        alert(state.lang === "bn"
+          ? "ছবিটি অনেক বড় (Firestore-এর ১MB সীমার কাছাকাছি)। আরেকটু ছোট/কম রেজ্যুলেশনের ছবি দিয়ে আবার চেষ্টা করুন।"
+          : "This image is too large for Firestore's ~1MB document limit. Please try a smaller/lower-resolution photo.");
+        return;
+      }
+      fbAddGalleryImage(dataUrl).catch(contentErr);
+    } else {
+      db.gallery.push({ id: `local-${Date.now()}`, src: dataUrl });
+      render();
     }
-    render();
   };
   reader.onerror = () => {
     alert(state.lang === "bn" ? "ছবি পড়তে সমস্যা হয়েছে, আবার চেষ্টা করো।" : "Couldn't read that image, please try again.");
@@ -291,19 +242,16 @@ function handleGalleryFileSelected(event) {
   reader.readAsDataURL(file);
 }
 
-async function deleteGalleryItem(id) {
-  try {
-    await fsDb.collection(GALLERY_COLLECTION).doc(id).delete();
-  } catch (err) {
-    console.error("delete gallery item failed:", err);
-    alert(state.lang === "bn" ? "ছবি মোছা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't delete the photo — check your Firestore Security Rules.");
-  }
+function deleteGalleryItem(id) {
+  if (fbContentReady()) { fbDeleteGalleryImage(id).catch(contentErr); }
+  else { db.gallery = db.gallery.filter(g => g.id !== id); render(); }
 }
 
 function galleryImgSrc(item) {
-  // New uploads are real data: URLs; the original demo entries are
+  // New uploads are real data: URLs; the original 3 demo entries are
   // just picsum.photos seed names, kept working for backward-compat.
-  return item.startsWith("data:") || item.startsWith("http") ? item : `https://picsum.photos/seed/${item}/300/220`;
+  const src = item.src || item;
+  return src.startsWith("data:") || src.startsWith("http") ? src : `https://picsum.photos/seed/${src}/300/220`;
 }
 
 function pageGallery() {
@@ -319,7 +267,7 @@ function pageGallery() {
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         ${db.gallery.map((item) => `
           <div class="relative">
-            <img src="${galleryImgSrc(item.src)}" class="rounded-lg w-full h-28 object-cover" alt="gallery" />
+            <img src="${galleryImgSrc(item)}" class="rounded-lg w-full h-28 object-cover" alt="gallery" />
             <button onclick="deleteGalleryItem('${item.id}')" class="absolute top-1 right-1 bg-forest text-cream rounded-full p-1">${icon("trash-2", 'style="width:12px;height:12px"')}</button>
           </div>`).join("")}
       </div>
@@ -327,31 +275,20 @@ function pageGallery() {
 }
 
 function updateNoticeTitle(v) { db.ui.noticeTitle = v; }
-
-async function publishNotice() {
+function publishNotice() {
   const lang = state.lang;
   const title = db.ui.noticeTitle.trim();
   if (!title) return;
-  try {
-    await fsDb.collection(NOTICES_COLLECTION).add({
-      title, tag: L(T.m_notices, lang), date: L(T.today, lang),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    db.ui.noticeTitle = "";
-  } catch (err) {
-    console.error("publish notice failed:", err);
-    alert(state.lang === "bn" ? "প্রকাশ করা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't publish — check your Firestore Security Rules.");
-  }
+  const dateLabel = L(T.today, lang);
+  if (fbContentReady()) { fbPublishNotice(title, dateLabel).catch(contentErr); }
+  else { db.notices.unshift({ id: Date.now(), title, date: dateLabel }); }
+  db.ui.noticeTitle = "";
   render();
 }
-
-async function deleteNotice(id) {
-  try {
-    await fsDb.collection(NOTICES_COLLECTION).doc(id).delete();
-  } catch (err) {
-    console.error("delete notice failed:", err);
-    alert(state.lang === "bn" ? "নোটিশ মোছা যায়নি — Firestore নিয়মাবলী (Rules) দেখুন।" : "Couldn't delete the notice — check your Firestore Security Rules.");
-  }
+function deleteNotice(id) {
+  if (fbContentReady()) { fbDeleteNotice(id).catch(contentErr); }
+  else { db.notices = db.notices.filter(n => n.id !== id); }
+  render();
 }
 
 function pageNotices() {
@@ -366,10 +303,10 @@ function pageNotices() {
       <div class="flex flex-col gap-2">
         ${db.notices.map(n => `
           <div class="card p-3 flex justify-between items-center">
-            <div class="text-forest">${n.title}</div>
+            <div class="text-forest">${L(n.title, lang)}</div>
             <div class="flex items-center gap-3">
               <span class="text-rope text-xs">${n.date}</span>
-              ${n.id ? `<button onclick="deleteNotice('${n.id}')" class="btn-danger text-xs flex items-center gap-1">${icon("trash-2", 'style="width:13px;height:13px"')}${L(T.delete, lang)}</button>` : ""}
+              <button onclick="deleteNotice('${n.id}')" class="btn-danger text-xs flex items-center gap-1">${icon("trash-2", 'style="width:13px;height:13px"')}${L(T.delete, lang)}</button>
             </div>
           </div>`).join("")}
       </div>
