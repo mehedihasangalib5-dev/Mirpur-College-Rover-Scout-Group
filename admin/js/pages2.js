@@ -20,8 +20,9 @@ function issueCertificate() {
   const { certMember, certTitle, certType, certIssueDate } = db.ui;
   if (!certMember || !certTitle.trim() || !certIssueDate) return;
   const code = hashStr(`${certMember}-${certTitle}-${Date.now()}`).toString(16).padStart(16, "0");
-  const entry = { id: Date.now(), member: certMember, title: certTitle, type: certType, date: certIssueDate, code };
-  db.certificates.unshift(entry);
+  const entry = { member: certMember, title: certTitle, type: certType, date: certIssueDate, code };
+  if (fbContentReady()) { fbIssueCertificate(entry).catch(contentErr); }
+  else { db.certificates.unshift({ id: Date.now(), ...entry }); }
   db.ui.justIssued = entry;
   render();
 }
@@ -33,7 +34,11 @@ function copyCertCode(code) {
   setTimeout(() => { db.ui.copied = false; render(); }, 1500);
 }
 
-function deleteCertificate(id) { db.certificates = db.certificates.filter(x => x.id !== id); render(); }
+function deleteCertificate(id) {
+  if (fbContentReady()) { fbDeleteCertificate(id).catch(contentErr); }
+  else { db.certificates = db.certificates.filter(x => x.id !== id); }
+  render();
+}
 
 function pageCertificates() {
   const lang = state.lang;
@@ -45,7 +50,7 @@ function pageCertificates() {
         <label class="text-sm text-rope block mb-1">${L(T.certSelectMember, lang)}</label>
         <select class="input-field mb-3" onchange="setCertMember(this.value)">
           <option value="">${L(T.certSelectPlaceholder, lang)}</option>
-          ${SEED_MEMBERS.map(m => `<option value="${m.name}" ${certMember === m.name ? "selected" : ""}>${m.name}</option>`).join("")}
+          ${db.members.map(m => `<option value="${L(m.name, lang)}" ${certMember === L(m.name, lang) ? "selected" : ""}>${L(m.name, lang)}</option>`).join("")}
         </select>
 
         <label class="text-sm text-rope block mb-1">${L(T.certTitleLabel, lang)}</label>
@@ -103,7 +108,7 @@ function pageCertificates() {
                 <td class="p-3 text-rope"><code class="text-xs">${c.code}</code></td>
                 <td class="p-3 flex gap-2">
                   <button class="btn-outline text-xs flex items-center gap-1">${icon("download", 'style="width:13px;height:13px"')} ${L(T.download, lang)}</button>
-                  <button onclick="deleteCertificate(${c.id})" class="btn-danger text-xs flex items-center gap-1">${icon("trash-2", 'style="width:13px;height:13px"')} ${L(T.delete, lang)}</button>
+                  <button onclick="deleteCertificate('${c.id}')" class="btn-danger text-xs flex items-center gap-1">${icon("trash-2", 'style="width:13px;height:13px"')} ${L(T.delete, lang)}</button>
                 </td>
               </tr>`).join("")}
           </tbody>
@@ -116,9 +121,9 @@ function toggleQrSelect(id) {
   db.qrSelected = db.qrSelected.includes(id) ? db.qrSelected.filter(x => x !== id) : [...db.qrSelected, id];
   render();
 }
-function generateQrSelected() { db.qrGenerated = SEED_MEMBERS.filter(m => db.qrSelected.includes(m.id)); render(); }
+function generateQrSelected() { db.qrGenerated = db.members.filter(m => db.qrSelected.includes(m.id)); render(); }
 function generateQrOne(id) {
-  const m = SEED_MEMBERS.find(x => x.id === id);
+  const m = db.members.find(x => x.id === id);
   db.qrGenerated = [...db.qrGenerated.filter(x => x.id !== id), m];
   render();
 }
@@ -131,11 +136,11 @@ function pageQrCodes() {
       <div class="card p-4 mb-6">
         <div class="ap-eyebrow text-xs text-rope mb-3">${L(T.qrSelectMembers, lang)}</div>
         <div class="flex flex-col gap-2">
-          ${SEED_MEMBERS.map((m, i) => `
+          ${db.members.map((m, i) => `
             <label class="flex items-center justify-between gap-3 ${i > 0 ? "border-t border-rope border-opacity-20 pt-2" : ""}">
               <span class="flex items-center gap-2 text-sm">
                 <input type="checkbox" ${db.qrSelected.includes(m.id) ? "checked" : ""} onchange="toggleQrSelect('${m.id}')" />
-                <span class="text-forest">${m.name}</span>
+                <span class="text-forest">${L(m.name, lang)}</span>
                 <span class="text-rope text-xs">${m.id}</span>
               </span>
               <button class="btn-outline text-xs flex items-center gap-1" onclick="generateQrOne('${m.id}')">${icon("scan-line", 'style="width:13px;height:13px"')} ${L(T.qrGenerateOne, lang)}</button>
@@ -150,7 +155,7 @@ function pageQrCodes() {
           ${db.qrGenerated.map(m => `
             <div class="card p-4 flex flex-col items-center text-center gap-2">
               ${qrCodeSvg(m.id)}
-              <div class="ap-display font-bold text-forest mt-1">${m.name}</div>
+              <div class="ap-display font-bold text-forest mt-1">${L(m.name, lang)}</div>
               <div class="text-rope text-xs">${m.id}</div>
               <div class="flex gap-2 mt-1">
                 <button class="btn-outline text-xs flex items-center gap-1">${icon("download", 'style="width:12px;height:12px"')} ${L(T.download, lang)}</button>
@@ -188,7 +193,7 @@ function markNotificationRead(id) { db.notifications = db.notifications.map(x =>
 function sendPush() {
   const lang = state.lang;
   if (!db.ui.pushTitle.trim()) return;
-  const deviceCount = db.ui.pushRecipient === "all" ? SEED_MEMBERS.length + 6 : 1;
+  const deviceCount = db.ui.pushRecipient === "all" ? db.members.length + 6 : 1;
   db.ui.pushSentInfo = deviceCount;
   db.notifications.unshift({ id: Date.now(), title: db.ui.pushTitle, body: db.ui.pushMessage, read: false, time: L(T.today, lang) });
   db.ui.pushTitle = ""; db.ui.pushMessage = "";
@@ -220,7 +225,7 @@ function pagePushSettings() {
             <label class="text-sm text-rope block mb-1">${L(T.pushRecipient, lang)}</label>
             <select class="input-field" onchange="setPushRecipient(this.value)">
               <option value="all" ${db.ui.pushRecipient === "all" ? "selected" : ""}>${L(T.pushRecipientAll, lang)}</option>
-              ${SEED_MEMBERS.map(m => `<option value="${m.id}" ${db.ui.pushRecipient === m.id ? "selected" : ""}>${m.name}</option>`).join("")}
+              ${db.members.map(m => `<option value="${m.id}" ${db.ui.pushRecipient === m.id ? "selected" : ""}>${L(m.name, lang)}</option>`).join("")}
             </select>
           </div>
           <input class="input-field" placeholder="${L(T.pushTitleLabel, lang)}" value="${db.ui.pushTitle}" oninput="setPushTitle(this.value)" />
