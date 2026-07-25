@@ -12,7 +12,6 @@ const state = {
   loginError: "",
   authLoading: true, // true until Firebase's onAuthStateChanged fires once
   loginSubmitting: false,
-  mobileSidebarOpen: false, // sidebar is an off-canvas drawer on mobile — see renderShell()
 };
 
 function normEmail(e) { return (e || "").trim().toLowerCase(); }
@@ -42,7 +41,7 @@ const db = {
   auditPage: 0,
   settings: { siteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", contactEmail: "info@nationalscout.org.bd", logoUrl: "" },
   ui: { showAddMember: false, newMemberName: "", newEventTitle: "", noticeTitle: "",
-        copied: false, emailSent: false, emailSending: false, emailError: "",
+        copied: false, emailSent: false,
         pushRecipient: "all", pushTitle: "", pushMessage: "", pushSentInfo: null,
         auditOpenDetails: null,
         settingsSiteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", settingsContactEmail: "info@nationalscout.org.bd",
@@ -57,8 +56,7 @@ let pendingLoginAttempt = false;
 
 function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
 function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
-function setPage(p) { state.page = p; state.mobileSidebarOpen = false; render(); }
-function toggleMobileSidebar() { state.mobileSidebarOpen = !state.mobileSidebarOpen; render(); }
+function setPage(p) { state.page = p; render(); }
 
 function createIcons() { if (window.lucide) window.lucide.createIcons(); }
 function icon(name, opts = "") { return `<i data-lucide="${name}" ${opts}></i>`; }
@@ -196,10 +194,10 @@ function renderLoginScreen() {
   const lang = state.lang;
   return `
   <div class="ap-root min-h-screen bg-forest flex items-center justify-center px-4">
-    <div class="card w-full max-w-md p-6 sm:p-8">
+    <div class="card w-full max-w-md p-8">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          ${icon("compass", 'style="width:34px;height:34px" class="text-ember"')}
+          <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:34px;height:34px;border-radius:6px;object-fit:cover" />
           <div>
             <div class="ap-display font-bold text-forest text-lg leading-none">${L(T.loginTitle, lang)}</div>
             <div class="ap-eyebrow text-rope text-xs mt-1">${L(T.orgTag, lang)}</div>
@@ -243,21 +241,18 @@ function renderShell() {
 
   return `
   <div class="ap-root min-h-screen flex">
-    ${state.mobileSidebarOpen ? `<div class="fixed inset-0 bg-black/50 z-40 md:hidden" onclick="toggleMobileSidebar()"></div>` : ""}
-    <aside class="bg-forest w-64 shrink-0 p-5 ${state.mobileSidebarOpen ? "flex" : "hidden"} flex-col fixed inset-y-0 left-0 z-50 md:static md:flex md:flex-col">
+    <aside class="bg-forest w-64 shrink-0 p-5 hidden md:flex md:flex-col">
       <div class="flex items-center gap-2 mb-8">
-        <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:28px;height:28px;object-fit:contain;border-radius:6px;flex-shrink:0" />
+        ${icon("compass", 'style="width:28px;height:28px" class="text-ember"')}
         <div>
           <div class="ap-display text-cream font-bold leading-none">${L(T.appName, lang)}</div>
           <div class="ap-eyebrow text-gold text-xs mt-1">${L(T[ROLE_LABEL_KEY[role]], lang)}</div>
         </div>
-        <button aria-label="close menu" onclick="toggleMobileSidebar()" class="icon-btn ml-auto md:hidden">${icon("x", 'style="width:16px;height:16px"')}</button>
       </div>
       <div class="flex flex-col gap-6 overflow-y-auto flex-1">
         ${MENU.map(group => {
-          const hideLocked = role === "editor" || role === "leader";
-          const visibleItems = group.items.filter(it => hideLocked ? hasAccess(it, role) : true);
-          if (hideLocked && visibleItems.length === 0) return "";
+          const visibleItems = group.items.filter(it => role === "editor" ? hasAccess(it, role) : true);
+          if (role === "editor" && visibleItems.length === 0) return "";
           return `
             <div>
               <div class="ap-eyebrow text-gold text-xs mb-2 opacity-70">${L(T[group.group], lang)}</div>
@@ -278,18 +273,15 @@ function renderShell() {
       <button onclick="logout()" class="sidebar-item mt-2">${icon("log-out", 'style="width:16px;height:16px"')} ${L(T.logout, lang)}</button>
     </aside>
 
-    <main class="flex-1 min-w-0">
-      <div class="bg-canvas border-b border-rope border-opacity-20 px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button aria-label="menu" onclick="toggleMobileSidebar()" class="icon-btn md:hidden shrink-0">${icon("menu", 'style="width:18px;height:18px"')}</button>
-          <span class="text-rope text-sm truncate"><span class="hidden sm:inline">${L(T.loggedInAs, lang)}: </span><span class="text-forest font-medium">${identifier}</span></span>
-        </div>
-        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-          <span class="ap-eyebrow text-xs text-ember hidden sm:inline">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
+    <main class="flex-1">
+      <div class="bg-canvas border-b border-rope border-opacity-20 px-6 py-3 flex items-center justify-between">
+        <span class="text-rope text-sm">${L(T.loggedInAs, lang)}: <span class="text-forest font-medium">${identifier}</span></span>
+        <div class="flex items-center gap-4">
+          <span class="ap-eyebrow text-xs text-ember">${L(T[ROLE_LABEL_KEY[role]], lang)}</span>
           ${headerToggles(true)}
         </div>
       </div>
-      <div class="p-4 sm:p-6 max-w-5xl">
+      <div class="p-6 max-w-5xl">
         ${currentAllowed ? (PAGE_RENDERERS[state.page] || PAGE_RENDERERS.dashboard)(role) : renderLockedNotice(currentItem ? L(T[currentItem.labelKey], lang) : state.page)}
       </div>
     </main>
@@ -310,18 +302,18 @@ function pageHeader(title, sub) {
   const lang = state.lang;
   return `
     <div class="mb-6">
-      <h2 class="ap-display text-xl sm:text-2xl font-bold text-forest">${L(title, lang)}</h2>
+      <h2 class="ap-display text-2xl font-bold text-forest">${L(title, lang)}</h2>
       ${sub ? `<p class="text-rope text-sm mt-1">${L(sub, lang)}</p>` : ""}
     </div>`;
 }
 
 function statCard(iconName, label, value) {
   return `
-    <div class="card p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-      <div class="bg-forest rounded-lg p-2 sm:p-3 shrink-0">${icon(iconName, 'style="width:20px;height:20px" class="text-cream"')}</div>
-      <div class="min-w-0">
-        <div class="ap-display text-lg sm:text-2xl font-bold text-forest">${value}</div>
-        <div class="text-rope text-xs sm:text-sm truncate">${label}</div>
+    <div class="card p-5 flex items-center gap-4">
+      <div class="bg-forest rounded-lg p-3">${icon(iconName, 'style="width:22px;height:22px" class="text-cream"')}</div>
+      <div>
+        <div class="ap-display text-2xl font-bold text-forest">${value}</div>
+        <div class="text-rope text-sm">${label}</div>
       </div>
     </div>`;
 }
