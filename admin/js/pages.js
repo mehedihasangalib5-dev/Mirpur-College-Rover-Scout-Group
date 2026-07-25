@@ -8,49 +8,79 @@ function pageDashboard() {
   return `
     <div>
       ${pageHeader(T.m_dashboard, T.dashSub)}
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        ${statCard("users", L(T.statMembers, lang), "১২৮")}
-        ${statCard("calendar", L(T.statEvents, lang), "১৪")}
-        ${statCard("clipboard-list", L(T.statAttendance, lang), "৯৪")}
-        ${statCard("user-plus", L(T.statPending, lang), "২")}
-        ${statCard("award", L(T.statCerts, lang), "৩৭")}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        ${statCard("users", L(T.statMembers, lang), bnNum(db.members.length, lang))}
+        ${statCard("calendar", L(T.statEvents, lang), bnNum(db.events.length, lang))}
+        ${statCard("bell", L(T.statNotices, lang), bnNum(db.notices.length, lang))}
+        ${statCard("user-plus", L(T.statPending, lang), bnNum(db.applications.length, lang))}
       </div>
     </div>`;
+}
+
+/* groups live members by join-month (needs a real Firestore createdAt
+   timestamp, so this only fills in once Firebase is connected) */
+function memberGrowthByMonth(members, lang) {
+  const map = new Map();
+  members.forEach((m) => {
+    if (!(m.createdAt && m.createdAt.toDate)) return;
+    const d = m.createdAt.toDate();
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const label = d.toLocaleDateString(lang === "bn" ? "bn-BD" : "en-GB", { month: "short" });
+    if (!map.has(key)) map.set(key, { month: label, count: 0, sortDate: d });
+    map.get(key).count++;
+  });
+  return [...map.values()].sort((a, b) => a.sortDate - b.sortDate);
+}
+
+/* rank/role breakdown (রোভার মেট / রোভার স্কাউট / রোভার স্কোয়ার) — makes
+   sense here since every member belongs to the same single institution */
+function rankDistribution(members, lang) {
+  const counts = {};
+  members.forEach((m) => {
+    const label = L(m.rank, lang) || (lang === "bn" ? "অনুল্লেখিত" : "Unspecified");
+    counts[label] = (counts[label] || 0) + 1;
+  });
+  return Object.entries(counts).map(([name, count]) => ({ name, count }));
 }
 
 function pageAnalytics() {
   const lang = state.lang;
   const genderData = SEED_GENDER.map(g => ({ name: L(T[g.key], lang), count: g.count }));
+  const growthData = memberGrowthByMonth(db.members, lang);
+  const rankData = rankDistribution(db.members, lang);
+  const recentRegs = [
+    ...db.applications.map(a => ({ name: L(a.name, lang), scoutId: a.id, status: "pending", date: applicationDate(a, lang) })),
+    ...db.members.slice(0, 10).map(m => ({ name: L(m.name, lang), scoutId: m.id, status: "active", date: "" })),
+  ];
   return `
     <div>
       ${pageHeader(T.m_analytics, T.analyticsSub)}
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        ${statCard("users", L(T.statMembers, lang), "১২৮")}
-        ${statCard("check-circle-2", L(T.statActive, lang), "১১৮")}
-        ${statCard("calendar", L(T.statUpcoming, lang), "৬")}
-        ${statCard("award", L(T.statCerts, lang), "৩৭")}
-        ${statCard("clipboard-list", L(T.statAttendance, lang), "৯৪%")}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        ${statCard("users", L(T.statMembers, lang), bnNum(db.members.length, lang))}
+        ${statCard("calendar", L(T.statUpcoming, lang), bnNum(db.events.length, lang))}
+        ${statCard("bell", L(T.statNotices, lang), bnNum(db.notices.length, lang))}
+        ${statCard("user-plus", L(T.statPending, lang), bnNum(db.applications.length, lang))}
       </div>
 
       <div class="grid lg:grid-cols-2 gap-5 mb-6">
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("bar-chart-3", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.chartMembersGrowth, lang)}</div>
-          ${miniBarChart(SEED_MEMBERS_OVER_TIME, "month", "count")}
+          ${growthData.length ? miniBarChart(growthData, "month", "count") : `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>`}
         </div>
         <div class="card p-5">
-          <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("bar-chart-3", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.chartAttendance, lang)}</div>
-          ${miniLineChart(SEED_ATTENDANCE_30D, "rate")}
+          <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("compass", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.chartRankDistribution, lang)}</div>
+          ${rankData.length ? hBarList(rankData, "name", "count") : `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>`}
         </div>
       </div>
 
       <div class="grid lg:grid-cols-2 gap-5 mb-6">
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("users", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.chartGender, lang)}</div>
-          ${hBarList(genderData, "name", "count")}
+          ${genderData.length ? hBarList(genderData, "name", "count") : `<div class="text-rope text-sm">${L(T.regEmpty, lang)}</div>`}
         </div>
         <div class="card p-5">
-          <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("compass", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.chartInstitutions, lang)}</div>
-          ${hBarList(SEED_TOP_INSTITUTIONS, "name", "count")}
+          <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("school", 'style="width:16px;height:16px" class="text-ember"')} ${L(T.institutionNote, lang)}</div>
+          <div class="flex items-center gap-3 h-full text-rope text-sm">${icon("map-pin", 'style="width:16px;height:16px" class="text-ember flex-shrink-0"')} ${L(T.institutionNoteBody, lang)}</div>
         </div>
       </div>
 
@@ -64,7 +94,8 @@ function pageAnalytics() {
             <th class="text-left p-3">${L(T.colDate, lang)}</th>
           </tr></thead>
           <tbody>
-            ${SEED_RECENT_REGS.map(r => `
+            ${recentRegs.length === 0 ? `<tr><td colspan="4" class="p-3 text-rope text-sm">${L(T.regEmpty, lang)}</td></tr>` : ""}
+            ${recentRegs.map(r => `
               <tr class="border-t border-rope border-opacity-20">
                 <td class="p-3 text-forest">${r.name}</td>
                 <td class="p-3 text-rope">${r.scoutId}</td>
