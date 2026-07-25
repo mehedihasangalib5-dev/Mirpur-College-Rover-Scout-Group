@@ -29,10 +29,21 @@ const db = {
   inviteSuperAdminInput: "", inviteSuperAdminError: "",
   inviteAdminInput: "", inviteAdminError: "",
   inviteEditorInput: "", inviteEditorError: "",
+  /* members/events/gallery/notices below start out as local seed data
+     (so the panel isn't empty before Firestore answers, and still works
+     if firebase-config.js hasn't been filled in yet) but get replaced
+     with the live Firestore documents the moment startContentListeners()
+     (see firebase-auth.js) receives its first snapshot after login —
+     that's what makes publish/save/delete on these four pages actually
+     persist and show up on the public site. */
   members: SEED_MEMBERS.slice(),
-  applications: SEED_APPLICATIONS.slice(),
-  events: ["বার্ষিক শীতকালীন ক্যাম্প", "পাহাড়ি হাইকিং অভিযান"],
-  gallery: ["camp1", "hike2", "group3"],
+  events: [
+    { id: "seed-1", title: "বার্ষিক শীতকালীন ক্যাম্প", date: "", location: "" },
+    { id: "seed-2", title: "পাহাড়ি হাইকিং অভিযান", date: "", location: "" },
+  ],
+  gallery: [
+    { id: "seed-1", src: "camp1" }, { id: "seed-2", src: "hike2" }, { id: "seed-3", src: "group3" },
+  ],
   notices: SEED_NOTICES.slice(),
   certificates: SEED_CERTIFICATES.slice(),
   qrSelected: [],
@@ -41,7 +52,7 @@ const db = {
   notifications: SEED_NOTIFICATIONS.slice(),
   auditFilter: "",
   auditPage: 0,
-  ui: { showAddMember: false, newMemberName: "", newEventTitle: "", noticeTitle: "",
+  ui: { showAddMember: false, newMemberName: "", newEventTitle: "", newEventDate: "", newEventLocation: "", noticeTitle: "", noticeTag: "",
         certMember: "", certTitle: "", certType: "participation", certIssueDate: "",
         justIssued: null, copied: false, emailSent: false,
         pushRecipient: "all", pushTitle: "", pushMessage: "", pushSentInfo: null,
