@@ -36,13 +36,23 @@ const db = {
   notices: SEED_NOTICES.slice(),
   pushSubscribed: true,
   notifications: SEED_NOTIFICATIONS.slice(),
+  auditLog: [],       // populated live from Firestore's "activityLog" collection — see firebase-content.js
   auditFilter: "",
   auditPage: 0,
+  settings: { siteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", contactEmail: "info@nationalscout.org.bd", logoUrl: "" },
   ui: { showAddMember: false, newMemberName: "", newEventTitle: "", noticeTitle: "",
         copied: false, emailSent: false,
         pushRecipient: "all", pushTitle: "", pushMessage: "", pushSentInfo: null,
-        auditOpenDetails: null },
+        auditOpenDetails: null,
+        settingsSiteName: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", settingsContactEmail: "info@nationalscout.org.bd",
+        settingsSaving: false, settingsSaved: false, settingsLogoUploading: false },
 };
+
+/* set right before calling fbLogin() so firebase-auth.js's
+   onAuthStateChanged handler can tell "someone just typed a password
+   and logged in" apart from "browser restored an existing session on
+   page load" — only the former gets a login_success activity-log entry */
+let pendingLoginAttempt = false;
 
 function setLang(l) { state.lang = l; localStorage.setItem("sc_lang", l); render(); }
 function setDark(d) { state.dark = d; localStorage.setItem("sc_dark", d ? "1" : "0"); render(); }
@@ -75,9 +85,11 @@ async function submitLogin(e) {
   render();
 
   try {
+    pendingLoginAttempt = true;
     await fbLogin(identifier, password);
     // success: onAuthStateChanged in firebase-auth.js takes it from here
   } catch (err) {
+    pendingLoginAttempt = false;
     state.loginError = fbErrorMessage(err, lang);
   } finally {
     state.loginSubmitting = false;
@@ -85,7 +97,9 @@ async function submitLogin(e) {
   }
 }
 
-function logout() {
+async function logout() {
+  const identifier = state.session && state.session.identifier;
+  if (identifier) { try { await logActivity("logout", identifier); } catch (e) { /* no-op */ } }
   fbLogout().catch(() => {});
 }
 
@@ -102,6 +116,7 @@ async function addInvitedSuperAdmin() {
   db.inviteSuperAdminError = "";
   try {
     await fbSetAdminRole(email, "superadmin", state.session.identifier);
+    logActivity("admin_role_granted", email, "role=superadmin");
     db.inviteSuperAdminInput = "";
   } catch (e) {
     db.inviteSuperAdminError = L(T.errGeneric, lang);
@@ -111,7 +126,7 @@ async function addInvitedSuperAdmin() {
 
 async function revokeInvitedSuperAdmin(email) {
   if (db.invitedSuperAdmins.length <= 1) return; // never allow zero super admins — total lockout
-  try { await fbRevokeAdminRole(email); } catch (e) { /* Firestore listener re-renders regardless */ }
+  try { await fbRevokeAdminRole(email); logActivity("admin_role_revoked", email, "role=superadmin"); } catch (e) { /* Firestore listener re-renders regardless */ }
 }
 
 async function addInvitedAdmin() {
@@ -122,6 +137,7 @@ async function addInvitedAdmin() {
   db.inviteAdminError = "";
   try {
     await fbSetAdminRole(email, "leader", state.session.identifier);
+    logActivity("admin_role_granted", email, "role=leader");
     db.inviteAdminInput = "";
   } catch (e) {
     db.inviteAdminError = L(T.errGeneric, lang);
@@ -130,7 +146,7 @@ async function addInvitedAdmin() {
 }
 
 async function revokeInvitedAdmin(email) {
-  try { await fbRevokeAdminRole(email); } catch (e) { /* no-op */ }
+  try { await fbRevokeAdminRole(email); logActivity("admin_role_revoked", email, "role=leader"); } catch (e) { /* no-op */ }
 }
 
 async function addInvitedEditor() {
@@ -141,6 +157,7 @@ async function addInvitedEditor() {
   db.inviteEditorError = "";
   try {
     await fbSetAdminRole(email, "editor", state.session.identifier);
+    logActivity("admin_role_granted", email, "role=editor");
     db.inviteEditorInput = "";
   } catch (e) {
     db.inviteEditorError = L(T.errGeneric, lang);
@@ -149,7 +166,7 @@ async function addInvitedEditor() {
 }
 
 async function revokeInvitedEditor(email) {
-  try { await fbRevokeAdminRole(email); } catch (e) { /* no-op */ }
+  try { await fbRevokeAdminRole(email); logActivity("admin_role_revoked", email, "role=editor"); } catch (e) { /* no-op */ }
 }
 
 function headerToggles(compact) {
