@@ -256,7 +256,7 @@ function renderShell() {
             </div>`;
         }).join("")}
       </div>
-      <a href="../public/index.html" class="sidebar-item" style="text-decoration:none;">${icon("compass", 'style="width:16px;height:16px"')} ${lang === "bn" ? "ওয়েবসাইটে ফিরুন" : "Back to Website"}</a>
+      <a href="../index.html" class="sidebar-item" style="text-decoration:none;">${icon("compass", 'style="width:16px;height:16px"')} ${lang === "bn" ? "ওয়েবসাইটে ফিরুন" : "Back to Website"}</a>
       <button onclick="logout()" class="sidebar-item mt-2">${icon("log-out", 'style="width:16px;height:16px"')} ${L(T.logout, lang)}</button>
     </aside>
 
