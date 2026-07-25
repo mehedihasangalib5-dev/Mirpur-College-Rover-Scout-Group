@@ -280,10 +280,10 @@ function pageHome() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         ${sectionTitle(lang === "bn" ? "আপডেট" : "Updates", lang === "bn" ? "সাম্প্রতিক সংবাদ" : "Latest News")}
         <div class="grid md:grid-cols-3 gap-6">
-          ${NEWS.slice(0, 3).map(n => card(`
+          ${NEWS.length ? NEWS.slice(0, 3).map(n => card(`
             ${n.tag ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(n.tag, lang)}</div>` : ""}
             <h4 class="font-semibold text-forest mb-2">${L(n.title, lang)}</h4>
-            <div class="text-rope text-sm flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>`)).join("")}
+            <div class="text-rope text-sm flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>`)).join("") : `<p class="text-rope text-center py-6 md:col-span-3">${L(UI.noNewsYet, lang)}</p>`}
         </div>
       </div>
     </section>
@@ -291,11 +291,11 @@ function pageHome() {
     <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "সামনে যা আসছে" : "Coming Up", lang === "bn" ? "আসন্ন ইভেন্ট" : "Upcoming Events")}
       <div class="grid md:grid-cols-3 gap-6">
-        ${EVENTS.slice(0, 3).map(e => card(`
+        ${EVENTS.length ? EVENTS.slice(0, 3).map(e => card(`
           <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
           ${e.date ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>` : ""}
           ${e.loc ? `<div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>` : ""}
-          <button onclick="setPage('events')" class="btn-primary text-sm">${L(UI.registerBtn, lang)}</button>`)).join("")}
+          <button onclick="setPage('events')" class="btn-primary text-sm">${L(UI.registerBtn, lang)}</button>`)).join("") : `<p class="text-rope text-center py-6 md:col-span-3">${L(UI.noEventsYet, lang)}</p>`}
       </div>
     </section>
 
@@ -303,8 +303,15 @@ function pageHome() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         ${sectionTitle(lang === "bn" ? "মুহূর্তগুলো" : "Moments", lang === "bn" ? "গ্যালারি" : "Gallery")}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          ${GALLERY.slice(0, 4).map(item => `<img src="${galleryImgSrc(item)}" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
+          ${GALLERY.length ? GALLERY.slice(0, 4).map(item => `<img src="${galleryImgSrc(item)}" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("") : `<p class="text-rope text-center py-6 col-span-2 md:col-span-4">${L(UI.noGalleryYet, lang)}</p>`}
         </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "কৃতজ্ঞতা" : "Gratitude", lang === "bn" ? "পৃষ্ঠপোষক ও অংশীদার" : "Sponsors & Partners")}
+      <div class="flex flex-wrap gap-4 sm:gap-6 items-center opacity-80">
+        ${(lang === "bn" ? ["সোনালী ব্যাংক", "গ্রামীণফোন", "বাংলাদেশ ট্যুরিজম বোর্ড", "স্কয়ার ফাউন্ডেশন"] : ["Sonali Bank", "Grameenphone", "Bangladesh Tourism Board", "Square Foundation"]).map(s => `<div class="card px-5 py-3 sc-eyebrow text-forest text-xs">${s}</div>`).join("")}
       </div>
     </section>`;
 }
@@ -377,7 +384,7 @@ function pageGallery() {
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "স্মৃতির পাতা" : "Memories", lang === "bn" ? "গ্যালারি" : "Gallery")}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        ${GALLERY.map(item => `<img src="${galleryImgSrc(item)}" class="rounded-lg object-cover w-full h-32 sm:h-36" alt="scout gallery" />`).join("")}
+        ${GALLERY.length ? GALLERY.map(item => `<img src="${galleryImgSrc(item)}" class="rounded-lg object-cover w-full h-32 sm:h-36" alt="scout gallery" />`).join("") : `<p class="text-rope text-center py-6 col-span-2 md:col-span-4">${L(UI.noGalleryYet, lang)}</p>`}
       </div>
     </div>`;
 }
@@ -414,13 +421,13 @@ function pageEvents() {
         ${cats.map(c => `<span class="card px-4 py-2 text-sm text-forest">${c}</span>`).join("")}
       </div>
       <div class="grid md:grid-cols-3 gap-6">
-        ${EVENTS.map(e => card(`
+        ${EVENTS.length ? EVENTS.map(e => card(`
           <img src="https://picsum.photos/seed/${String(L(e.title, lang)).length}${e.id || ""}/400/200" class="rounded-lg mb-4 w-full h-32 object-cover" alt="${L(e.title, lang)}" />
           <h4 class="font-semibold text-forest mb-2">${L(e.title, lang)}</h4>
           ${e.date ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("calendar", 'style="width:14px;height:14px"')}${L(e.date, lang)}</div>` : ""}
           ${e.loc ? `<div class="text-rope text-sm flex items-center gap-2 mb-1">${icon("map-pin", 'style="width:14px;height:14px"')}${L(e.loc, lang)}</div>` : ""}
           ${e.seats ? `<div class="text-rope text-sm flex items-center gap-2 mb-3">${icon("users", 'style="width:14px;height:14px"')}${L(UI.participants, lang)}: ${L(e.seats, lang)}</div>` : ""}
-          <button onclick="setPage('register')" class="btn-primary text-sm w-full">${L(UI.registerBtn, lang)}</button>`)).join("")}
+          <button onclick="setPage('register')" class="btn-primary text-sm w-full">${L(UI.registerBtn, lang)}</button>`)).join("") : `<p class="text-rope text-center py-6 md:col-span-3">${L(UI.noEventsYet, lang)}</p>`}
       </div>
     </div>`;
 }
@@ -431,12 +438,12 @@ function pageNews() {
     <div class="max-w-5xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "প্রকাশনা" : "Publications", lang === "bn" ? "সংবাদ ও নোটিশ" : "News & Notices")}
       <div class="flex flex-col gap-4">
-        ${NEWS.map(n => card(`
+        ${NEWS.length ? NEWS.map(n => card(`
           ${n.tag ? `<div class="sc-eyebrow text-ember text-xs bg-canvas px-2 py-1 rounded flex-shrink-0">${L(n.tag, lang)}</div>` : ""}
           <div>
             <h4 class="font-semibold text-forest">${L(n.title, lang)}</h4>
             <div class="text-rope text-sm mt-1 flex items-center gap-2">${icon("clock", 'style="width:14px;height:14px"')}${L(n.date, lang)}</div>
-          </div>`, "flex items-start gap-4")).join("")}
+          </div>`, "flex items-start gap-4")).join("") : `<p class="text-rope text-center py-6">${L(UI.noNewsYet, lang)}</p>`}
       </div>
     </div>`;
 }
