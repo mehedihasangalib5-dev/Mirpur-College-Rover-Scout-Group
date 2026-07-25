@@ -358,10 +358,16 @@ function pageContact() {
             <button class="btn-primary" onclick="alert('${lang === "bn" ? "বার্তা পাঠানো হয়েছে (নমুনা)" : "Message sent (demo)"}')">${L(UI.sendMessage, lang)}</button>
           </div>`)}
         ${card(`
-          <div class="rounded-lg overflow-hidden mb-4 h-48 bg-canvas flex items-center justify-center">
-            ${icon("map-pin", 'style="width:36px;height:36px" class="text-ember"')}
-            <span class="text-rope ml-2">${lang === "bn" ? "https://maps.app.goo.gl/X9S156sVyBB2xXkK8" : "Google Map (sample)"}</span>
+          <div class="rounded-lg overflow-hidden mb-4 h-48">
+            <iframe
+              src="https://www.google.com/maps?q=${encodeURIComponent(ORG.mapQuery)}&output=embed"
+              width="100%" height="100%" style="border:0; display:block;"
+              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              title="${lang === "bn" ? "মানচিত্র" : "Map"}"></iframe>
           </div>
+          <a href="${ORG.mapLink}" target="_blank" rel="noopener" class="text-ember text-sm flex items-center gap-2 mb-4 hover:underline">
+            ${icon("map-pin", 'style="width:16px;height:16px"')} ${lang === "bn" ? "গুগল ম্যাপে দেখুন" : "Open in Google Maps"}
+          </a>
           <div class="space-y-2 text-sm">
             <div class="flex items-center gap-2 text-rope">${icon("phone", 'style="width:16px;height:16px"')} +৮৮০ ২-৯xxxxxxx</div>
             <div class="flex items-center gap-2 text-rope">${icon("mail", 'style="width:16px;height:16px"')} mcrsg.mirpurcollege@gmail.com</div>
