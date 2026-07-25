@@ -123,6 +123,10 @@ fbAuth.onAuthStateChanged(async (user) => {
     const roleDoc = await fetchAdminRoleDoc(email);
     if (!roleDoc || !roleDoc.role) {
       state.loginError = L(T.errNotAdmin, state.lang);
+      if (pendingLoginAttempt) {
+        pendingLoginAttempt = false;
+        try { await logActivity("login_failed", email, "email not registered as admin"); } catch (e) { /* no-op */ }
+      }
       await fbAuth.signOut(); // re-triggers this callback with user = null
       return;
     }
@@ -130,7 +134,8 @@ fbAuth.onAuthStateChanged(async (user) => {
     state.loginError = "";
     state.page = "dashboard";
     startAdminsListener(); // also calls render() once data arrives
-    startContentListeners(); // members/applications/events/gallery/notices/certificates — see firebase-content.js
+    startContentListeners(); // members/applications/events/gallery/notices/certificates/activityLog/settings — see firebase-content.js
+    if (pendingLoginAttempt) { pendingLoginAttempt = false; logActivity("login_success", email); }
     render();
   } catch (err) {
     state.loginError = L(T.errGeneric, state.lang);
