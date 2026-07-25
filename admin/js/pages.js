@@ -114,14 +114,14 @@ function addMember() {
   const name = db.ui.newMemberName.trim();
   if (!name) return;
   if (fbContentReady()) {
-    fbAddMember(name).catch(contentErr); // listener updates db.members + re-renders on success
+    fbAddMember(name).then(() => logActivity("member_added", name)).catch(contentErr); // listener updates db.members + re-renders on success
   } else {
     db.members.push({ id: `MCRSG-${1190 + db.members.length}`, name, inst: "মিরপুর কলেজ", rank: "রোভার স্কোয়ার" });
   }
   db.ui.newMemberName = ""; db.ui.showAddMember = false; render();
 }
 function deleteMember(id) {
-  if (fbContentReady()) { fbDeleteMember(id).catch(contentErr); }
+  if (fbContentReady()) { fbDeleteMember(id).then(() => logActivity("member_deleted", id)).catch(contentErr); }
   else { db.members = db.members.filter(x => x.id !== id); }
   render();
 }
@@ -165,12 +165,13 @@ function pageMembers(role) {
 function approveApplication(id) {
   const app = db.applications.find(x => x.id == id);
   if (!app) return;
-  if (fbContentReady()) { fbApproveApplication(app).catch(contentErr); }
+  if (fbContentReady()) { fbApproveApplication(app).then(() => logActivity("application_approved", L(app.name, state.lang) || id)).catch(contentErr); }
   else { db.applications = db.applications.filter(x => x.id != id); }
   render();
 }
 function rejectApplication(id) {
-  if (fbContentReady()) { fbRejectApplication(id).catch(contentErr); }
+  const app = db.applications.find(x => x.id == id);
+  if (fbContentReady()) { fbRejectApplication(id).then(() => logActivity("application_rejected", (app && L(app.name, state.lang)) || id)).catch(contentErr); }
   else { db.applications = db.applications.filter(x => x.id != id); }
   render();
 }
@@ -208,13 +209,14 @@ function updateNewEventTitle(v) { db.ui.newEventTitle = v; }
 function addEvent() {
   const title = db.ui.newEventTitle.trim();
   if (!title) return;
-  if (fbContentReady()) { fbAddEvent(title).catch(contentErr); }
+  if (fbContentReady()) { fbAddEvent(title).then(() => logActivity("event_added", title)).catch(contentErr); }
   else { db.events.push({ id: `local-${Date.now()}`, title }); }
   db.ui.newEventTitle = "";
   render();
 }
 function deleteEvent(id) {
-  if (fbContentReady()) { fbDeleteEvent(id).catch(contentErr); }
+  const ev = db.events.find(e => e.id === id);
+  if (fbContentReady()) { fbDeleteEvent(id).then(() => logActivity("event_deleted", (ev && L(ev.title, state.lang)) || id)).catch(contentErr); }
   else { db.events = db.events.filter(e => e.id !== id); }
   render();
 }
@@ -264,7 +266,7 @@ function handleGalleryFileSelected(event) {
           : "This image is too large for Firestore's ~1MB document limit. Please try a smaller/lower-resolution photo.");
         return;
       }
-      fbAddGalleryImage(dataUrl).catch(contentErr);
+      fbAddGalleryImage(dataUrl).then(() => logActivity("gallery_added", "new photo")).catch(contentErr);
     } else {
       db.gallery.push({ id: `local-${Date.now()}`, src: dataUrl });
       render();
@@ -277,7 +279,7 @@ function handleGalleryFileSelected(event) {
 }
 
 function deleteGalleryItem(id) {
-  if (fbContentReady()) { fbDeleteGalleryImage(id).catch(contentErr); }
+  if (fbContentReady()) { fbDeleteGalleryImage(id).then(() => logActivity("gallery_deleted", id)).catch(contentErr); }
   else { db.gallery = db.gallery.filter(g => g.id !== id); render(); }
 }
 
@@ -314,13 +316,14 @@ function publishNotice() {
   const title = db.ui.noticeTitle.trim();
   if (!title) return;
   const dateLabel = L(T.today, lang);
-  if (fbContentReady()) { fbPublishNotice(title, dateLabel).catch(contentErr); }
+  if (fbContentReady()) { fbPublishNotice(title, dateLabel).then(() => logActivity("notice_published", title)).catch(contentErr); }
   else { db.notices.unshift({ id: Date.now(), title, date: dateLabel }); }
   db.ui.noticeTitle = "";
   render();
 }
 function deleteNotice(id) {
-  if (fbContentReady()) { fbDeleteNotice(id).catch(contentErr); }
+  const n = db.notices.find(x => x.id === id);
+  if (fbContentReady()) { fbDeleteNotice(id).then(() => logActivity("notice_deleted", (n && L(n.title, state.lang)) || id)).catch(contentErr); }
   else { db.notices = db.notices.filter(n => n.id !== id); }
   render();
 }
