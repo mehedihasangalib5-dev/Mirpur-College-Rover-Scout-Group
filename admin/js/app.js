@@ -243,7 +243,7 @@ function renderShell() {
   <div class="ap-root min-h-screen flex">
     <aside class="bg-forest w-64 shrink-0 p-5 hidden md:flex md:flex-col">
       <div class="flex items-center gap-2 mb-8">
-        ${icon("compass", 'style="width:28px;height:28px" class="text-ember"')}
+        <img src="img/logo.png" alt="${L(T.appName, lang)}" style="width:28px;height:28px;border-radius:6px;object-fit:cover" />
         <div>
           <div class="ap-display text-cream font-bold leading-none">${L(T.appName, lang)}</div>
           <div class="ap-eyebrow text-gold text-xs mt-1">${L(T[ROLE_LABEL_KEY[role]], lang)}</div>
