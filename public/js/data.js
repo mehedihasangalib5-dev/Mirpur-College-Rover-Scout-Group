@@ -105,21 +105,17 @@ const STATS = [
   { label: { bn: "অর্জিত ব্যাজ ও অ্যাওয়ার্ড", en: "Badges & Awards Earned" }, value: { bn: "২৩০+", en: "230+" }, icon: "award" },
 ];
 
-/* NEWS/EVENTS/GALLERY below are `let`, not `const` — they start out as
-   demo seed content, but startNoticesListener()/startEventsListener()/
-   startGalleryListener() in app.js replace them with whatever the admin
-   panel has actually published, the moment Firestore returns at least
-   one document. This is what makes Notices/Events/Gallery published
-   from the admin panel actually show up here instead of only living in
-   the admin panel's own browser memory. */
-
-let NEWS = [
+/* NEWS_SEED / EVENTS_SEED — demo content shown only until Firebase is
+   connected (js/firebase-config.js). Once connected, the live NEWS /
+   EVENTS variables below (kept in sync by js/firebase-content.js) take
+   over completely, reflecting exactly what's Published in /admin. */
+const NEWS_SEED = [
   { title: { bn: "রোভার বেসিক কোর্স (RBC) ব্যাচ-১২ সম্পন্ন", en: "Rover Basic Course (RBC) Batch-12 concludes" }, date: { bn: "১৮ জুলাই, ২০২৬", en: "18 July 2026" }, tag: { bn: "প্রতিবেদন", en: "Report" } },
   { title: { bn: "জাতীয় রোভার মুট ২০২৭ এর জন্য দল গঠন শুরু", en: "Team formation begins for National Rover Moot 2027" }, date: { bn: "১০ জুলাই, ২০২৬", en: "10 July 2026" }, tag: { bn: "ঘোষণা", en: "Announcement" } },
   { title: { bn: "নতুন সেশনে রোভার স্কোয়ার ভর্তি শুরু", en: "Rover Squire admissions open for new session" }, date: { bn: "০২ জুলাই, ২০২৬", en: "02 July 2026" }, tag: { bn: "নোটিশ", en: "Notice" } },
 ];
 
-let EVENTS = [
+const EVENTS_SEED = [
   { title: { bn: "বার্ষিক সার্ভিস ক্যাম্প — মিরপুর", en: "Annual Service Camp — Mirpur" }, date: { bn: "১৫-১৭ ডিসেম্বর", en: "15–17 Dec" }, loc: { bn: "মিরপুর কলেজ ক্যাম্পাস", en: "Mirpur College Campus" }, seats: { bn: "৭৫/১০০", en: "75/100" } },
   { title: { bn: "পাহাড়ি হাইকিং ও ট্রেকিং অভিযান", en: "Hill Hiking & Trekking Expedition" }, date: { bn: "০৫ সেপ্টেম্বর", en: "05 Sep" }, loc: { bn: "বান্দরবান", en: "Bandarban" }, seats: { bn: "২৮/৪০", en: "28/40" } },
   { title: { bn: "রক্তদান ও কমিউনিটি সার্ভিস সপ্তাহ", en: "Blood Donation & Community Service Week" }, date: { bn: "২১-২৭ আগস্ট", en: "21–27 Aug" }, loc: { bn: "মিরপুর, ঢাকা", en: "Mirpur, Dhaka" }, seats: { bn: "৬০/৮০", en: "60/80" } },
@@ -151,13 +147,7 @@ const ACHIEVEMENTS = [
   { title: { bn: "প্রেসিডেন্ট রোভার স্কাউট অ্যাওয়ার্ড ২০২৫", en: "President's Rover Scout Award 2025" }, detail: { bn: "৯ জন রোভার সম্মানিত", en: "9 rovers honoured" }, icon: "graduation-cap" },
 ];
 
-let GALLERY = ["camp1","hike2","badge3","group4","tent5","flag6","fire7","river8"];
-
-function galleryImgSrc(item) {
-  // Real admin uploads are data: URLs; the demo seed entries are just
-  // picsum.photos seed names, kept working for backward-compat.
-  return item.startsWith("data:") || item.startsWith("http") ? item : `https://picsum.photos/seed/${item}/400/300`;
-}
+const GALLERY_SEED = ["camp1","hike2","badge3","group4","tent5","flag6","fire7","river8"];
 
 const DOWNLOADS = [
   { name: { bn: "রোভার সদস্য রেজিস্ট্রেশন ফর্ম", en: "Rover Membership Registration Form" }, size: "245 KB · PDF", file: "downloads/registration-form.pdf" },
@@ -177,10 +167,16 @@ const ABOUT_BLOCKS = [
   { title: { bn: "সাংগঠনিক কাঠামো", en: "Organizational Structure" }, body: { bn: "কলেজ কর্তৃপক্ষ, রোভার স্কাউট লিডার (RSL) ও রোভার মেটদের সমন্বয়ে পরিচালিত গ্রুপ কমিটি।", en: "A Group Committee coordinated by the college authority, the Rover Scout Leader (RSL), and student Rover Mates." }, icon: "users" },
 ];
 
-/* ---------------- members (in-memory only — resets on page reload,
-   not shared between visitors; there is no backend/database wired up
-   yet, see admin/FIREBASE-SETUP.md to connect a real one) ---------------- */
+/* ---------------- live content ----------------
+   These start out as copies of the demo seed data above, and are then
+   replaced with live data from Firestore by js/firebase-content.js as
+   soon as js/firebase-config.js has real values — see
+   admin/FIREBASE-SETUP.md to connect a real Firebase project. Until
+   then, the site keeps working with the built-in demo content. */
 let MEMBERS = [];
+let NEWS = NEWS_SEED.slice();
+let EVENTS = EVENTS_SEED.slice();
+let GALLERY = GALLERY_SEED.map((seed) => ({ id: seed, src: seed }));
 
 function nextMemberId() {
   const year = new Date().getFullYear();
