@@ -540,6 +540,30 @@ let lastRegisteredMemberId = null;
 
 function updateRegisterField(k, v) { registerForm[k] = v; }
 
+function handleRegisterPhotoSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    // Firestore documents are capped at ~1MiB, and this photo shares the
+    // doc with the rest of the profile fields — keep some headroom.
+    if (dataUrl.length > 700000) {
+      alert(state.lang === "bn"
+        ? "ছবিটি অনেক বড়। আরেকটু ছোট সাইজের পাসপোর্ট ছবি দিয়ে আবার চেষ্টা করো।"
+        : "This photo is too large. Please try a smaller passport-size photo.");
+      input.value = "";
+      return;
+    }
+    registerForm.photo = dataUrl;
+    render();
+  };
+  reader.onerror = () => {
+    alert(state.lang === "bn" ? "ছবি পড়তে সমস্যা হয়েছে, আবার চেষ্টা করো।" : "Couldn't read that photo, please try again.");
+  };
+  reader.readAsDataURL(file);
+}
+
 function submitRegister() {
   const newId = nextMemberId();
   const newMember = {
@@ -550,6 +574,7 @@ function submitRegister() {
     mobile: registerForm.phone || "",
     email: registerForm.email || "",
     blood: registerForm.blood || "",
+    photo: registerForm.photo || "",
     joiningDate: { bn: new Date().toLocaleDateString("bn-BD"), en: new Date().toLocaleDateString("en-GB") },
     attendance: 0,
     badgeCount: 0,
@@ -608,7 +633,8 @@ function pageRegister() {
           </div>
           <div>
             <label class="text-sm text-rope block mb-1">${L(UI.photo, lang)}</label>
-            <input type="file" class="input-field" />
+            <input type="file" accept="image/*" class="input-field" onchange="handleRegisterPhotoSelected(this)" />
+            ${registerForm.photo ? `<img src="${registerForm.photo}" class="mt-2 rounded-lg w-20 h-20 object-cover" alt="preview" />` : ""}
           </div>
         </div>
         <div class="mt-5">
@@ -640,7 +666,7 @@ function memberProfileCard(m, lang) {
     <div class="grid md:grid-cols-3 gap-6 md:gap-8">
       ${card(`
         ${m.isNew ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(UI.newlyAdded, lang)}</div>` : ""}
-        <img src="https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+        <img src="${m.photo || `https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200`}" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
         <h4 class="sc-display font-bold text-forest text-lg">${L(m.name, lang)}</h4>
         <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: ${m.id}</div>
         <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: ${m.blood || "—"}</div>`,
