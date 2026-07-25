@@ -4,19 +4,70 @@
    continues js/pages.js
 --------------------------------------------------------- */
 
-function sendEmail() { db.ui.emailSent = true; render(); }
+/* sendEmail() used to just flip a "sent" flag without reading the form or
+   contacting anything — this is a static site with no mail server, so the
+   fix wires the real field values into EmailJS's client-side send API. See
+   admin/js/emailjs-config.js and admin/EMAIL-SETUP.md for the one-time setup. */
+function sendEmail() {
+  const lang = state.lang;
+  const recipientEl = document.getElementById("emailRecipient");
+  const subjectEl = document.getElementById("emailSubject");
+  const messageEl = document.getElementById("emailMessage");
+  const recipient = (recipientEl.value || "").trim();
+  const subject = (subjectEl.value || "").trim();
+  const message = (messageEl.value || "").trim();
+
+  db.ui.emailSent = false;
+  db.ui.emailError = "";
+
+  if (!recipient || !subject || !message) {
+    db.ui.emailError = lang === "bn"
+      ? "প্রাপকের ইমেইল, বিষয় ও বার্তা — সবগুলো পূরণ করুন।"
+      : "Please fill in the recipient, subject, and message.";
+    render();
+    return;
+  }
+
+  if (!emailjsReady()) {
+    db.ui.emailError = lang === "bn"
+      ? "ইমেইল সার্ভিস এখনও কনফিগার করা হয়নি। admin/EMAIL-SETUP.md দেখে js/emailjs-config.js এ EmailJS তথ্য বসান।"
+      : "Email service isn't configured yet. See admin/EMAIL-SETUP.md and add your EmailJS details to js/emailjs-config.js.";
+    render();
+    return;
+  }
+
+  db.ui.emailSending = true;
+  render();
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { to_email: recipient, subject, message })
+    .then(() => {
+      db.ui.emailSending = false;
+      db.ui.emailSent = true;
+      recipientEl.value = ""; subjectEl.value = ""; messageEl.value = "";
+      logActivity("email_sent", recipient, subject);
+      render();
+    })
+    .catch((err) => {
+      console.error(err);
+      db.ui.emailSending = false;
+      db.ui.emailError = lang === "bn" ? "ইমেইল পাঠানো যায়নি। আবার চেষ্টা করুন।" : "Could not send the email. Please try again.";
+      render();
+    });
+}
 
 function pageEmail() {
   const lang = state.lang;
+  const sending = db.ui.emailSending;
   return `
     <div>
       ${pageHeader(T.m_email)}
       <div class="card p-5 max-w-lg flex flex-col gap-3">
-        <input class="input-field" placeholder="${L(T.emailRecipientPh, lang)}" />
-        <input class="input-field" placeholder="${L(T.emailSubjectPh, lang)}" />
-        <textarea class="input-field" rows="4" placeholder="${L(T.emailMessagePh, lang)}"></textarea>
-        <button class="btn-primary flex items-center gap-2 w-fit" onclick="sendEmail()">${icon("send", 'style="width:16px;height:16px"')} ${L(T.send, lang)}</button>
+        <input id="emailRecipient" class="input-field" placeholder="${L(T.emailRecipientPh, lang)}" ${sending ? "disabled" : ""} />
+        <input id="emailSubject" class="input-field" placeholder="${L(T.emailSubjectPh, lang)}" ${sending ? "disabled" : ""} />
+        <textarea id="emailMessage" class="input-field" rows="4" placeholder="${L(T.emailMessagePh, lang)}" ${sending ? "disabled" : ""}></textarea>
+        <button class="btn-primary flex items-center gap-2 w-fit" ${sending ? "disabled" : ""} onclick="sendEmail()">${icon("send", 'style="width:16px;height:16px"')} ${sending ? L(T.sending, lang) : L(T.send, lang)}</button>
         ${db.ui.emailSent ? `<div class="text-ok text-sm flex items-center gap-2">${icon("check", 'style="width:14px;height:14px"')} ${L(T.emailSentMsg, lang)}</div>` : ""}
+        ${db.ui.emailError ? `<div class="text-danger text-sm flex items-center gap-2">${icon("alert-triangle", 'style="width:14px;height:14px"')} ${db.ui.emailError}</div>` : ""}
       </div>
     </div>`;
 }
@@ -404,12 +455,6 @@ function pageSettings() {
     <div>
       ${pageHeader(T.m_settings)}
       <div class="grid md:grid-cols-2 gap-6">
-        <div class="card p-5">
-          <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("palette", 'style="width:18px;height:18px" class="text-ember"')} ${L(T.themeControl, lang)}</div>
-          <div class="flex gap-3">
-            ${["#006B3F","#D4AF37","#FFFFFF","#1F2937"].map(c => `<div class="w-8 h-8 rounded-full border-2 border-white shadow" style="background:${c}"></div>`).join("")}
-          </div>
-        </div>
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-3 text-forest font-semibold">${icon("image-plus", 'style="width:18px;height:18px" class="text-ember"')} ${L(T.logoChange, lang)}</div>
           ${db.settings.logoUrl ? `<img src="${db.settings.logoUrl}" class="w-16 h-16 rounded-lg object-cover mb-3" alt="logo" />` : ""}
