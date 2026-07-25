@@ -8,12 +8,12 @@
    ধাপে ধাপে গাইড: public/MEMBER-FIREBASE-SETUP.md দেখো।
 --------------------------------------------------------- */
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID",
+  apiKey: "AIzaSyD91YXaZqjq88QA2olFS9dZqT1C5FscGcI",
+  authDomain: "mirpur-college-rover-scout.firebaseapp.com",
+  projectId: "mirpur-college-rover-scout",
+  storageBucket: "mirpur-college-rover-scout.firebasestorage.app",
+  messagingSenderId: "518944819264",
+  appId: "1:518944819264:web:fc9c819aa3a75dfd1a77a5"
 };
 
 firebase.initializeApp(firebaseConfig);
