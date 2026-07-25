@@ -13,6 +13,12 @@ const ORG = {
   name: { bn: "মিরপুর কলেজ রোভার স্কাউট গ্রুপ", en: "Mirpur College Rover Scout Group" },
   short: { bn: "এমসিআরএসজি", en: "MCRSG" },
   tagline: { bn: "মিরপুর কলেজ, মিরপুর-২, ঢাকা", en: "Mirpur College, Mirpur-2, Dhaka" },
+  // Change these two to update the Contact page map:
+  //  - mapQuery: the address/place name to embed (no API key needed)
+  //  - mapLink: the "Open in Google Maps" button target (a normal
+  //    maps.google.com or maps.app.goo.gl share link works fine)
+  mapQuery: "Mirpur College, Mirpur-2, Dhaka, Bangladesh",
+  mapLink: "https://maps.app.goo.gl/X9S156sVyBB2xXkK8",
 };
 
 const UI = {
