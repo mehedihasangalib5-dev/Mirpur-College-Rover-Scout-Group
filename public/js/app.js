@@ -497,6 +497,36 @@ function pageAchievement() {
     </div>`;
 }
 
+/* ---------------- Firestore sync for MEMBERS ----------------
+   If js/firebase-config.js still has placeholder values (Firebase not
+   set up yet), fbMembersReady() returns false and everything falls back
+   to the old in-memory-only behaviour, so the site keeps working even
+   before Firebase is connected. */
+const MEMBERS_COLLECTION = "members";
+let membersUnsub = null;
+
+function fbMembersReady() {
+  return typeof firebase !== "undefined" && typeof firebase.firestore === "function";
+}
+
+function startMembersListener() {
+  if (!fbMembersReady()) return; // no firebase-config.js values yet — stay on local MEMBERS
+  if (membersUnsub) return;
+  membersUnsub = firebase.firestore().collection(MEMBERS_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .onSnapshot(
+      (snap) => {
+        MEMBERS = snap.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        render();
+      },
+      (err) => {
+        console.error("members listener error:", err);
+        // Most likely cause: Firestore security rules don't allow public
+        // read yet — see public/MEMBER-FIREBASE-SETUP.md.
+      }
+    );
+}
+
 let registerForm = {};
 let registerSubmitted = false;
 let lastRegisteredMemberId = null;
@@ -504,9 +534,6 @@ let lastRegisteredMemberId = null;
 function updateRegisterField(k, v) { registerForm[k] = v; }
 
 function submitRegister() {
-  // Turn the filled-in application into a member profile and add it to
-  // MEMBERS (in-memory only — see the note above the MEMBERS array in
-  // data.js) so it shows up right away in the Member Portal.
   const newId = nextMemberId();
   const newMember = {
     id: newId,
@@ -522,7 +549,20 @@ function submitRegister() {
     avatarSeed: newId,
     isNew: true,
   };
-  MEMBERS.unshift(newMember);
+
+  if (fbMembersReady()) {
+    // Document ID = the Rover ID itself, so it's the same value everywhere.
+    firebase.firestore().collection(MEMBERS_COLLECTION).doc(newId).set({
+      ...newMember,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch((err) => console.error("save member failed:", err));
+    // The onSnapshot listener above will add it to MEMBERS and re-render
+    // once Firestore confirms — no need to touch MEMBERS here.
+  } else {
+    // Firebase not configured yet — keep the old local-only behaviour.
+    MEMBERS.unshift(newMember);
+  }
+
   lastRegisteredMemberId = newId;
   registerSubmitted = true;
   render();
@@ -574,16 +614,8 @@ function pageRegister() {
 
 function memberProfileCard(m, lang) {
   const attendance = m.attendance || 0;
-  return `
-    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
-      ${card(`
-        ${m.isNew ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(UI.newlyAdded, lang)}</div>` : ""}
-        <img src="https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
-        <h4 class="sc-display font-bold text-forest text-lg">${L(m.name, lang)}</h4>
-        <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: ${m.id}</div>
-        <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: ${m.blood || "—"}</div>`,
-        "md:col-span-1 flex flex-col items-center text-center")}
-      ${card(`
+
+  const infoBlock = `
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <div><span class="text-rope">${L(UI.mobile, lang)}:</span> <span class="text-forest">${m.mobile || "—"}</span></div>
           <div><span class="text-rope">${L(UI.email, lang)}:</span> <span class="text-forest">${m.email || "—"}</span></div>
@@ -595,8 +627,18 @@ function memberProfileCard(m, lang) {
         <div class="mt-5">
           <div class="text-rope text-sm mb-1 flex justify-between"><span>${L(UI.attendanceRate, lang)}</span><span>${attendance}%</span></div>
           <div class="w-full bg-canvas rounded-full h-2.5"><div class="bg-ember h-2.5 rounded-full" style="width:${attendance}%"></div></div>
-        </div>`,
-        "md:col-span-2")}
+        </div>`;
+
+  return `
+    <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+      ${card(`
+        ${m.isNew ? `<div class="sc-eyebrow text-ember text-xs mb-2">${L(UI.newlyAdded, lang)}</div>` : ""}
+        <img src="https://picsum.photos/seed/${encodeURIComponent(m.avatarSeed || m.id)}/200/200" class="rounded-full w-32 h-32 object-cover mb-4" alt="member" />
+        <h4 class="sc-display font-bold text-forest text-lg">${L(m.name, lang)}</h4>
+        <div class="sc-eyebrow text-ember text-xs mt-1">ROVER ID: ${m.id}</div>
+        <div class="mt-3 text-rope text-sm flex items-center gap-2">${icon("droplet", 'style="width:14px;height:14px"')} ${L(UI.bloodGroup, lang)}: ${m.blood || "—"}</div>`,
+        "md:col-span-1 flex flex-col items-center text-center")}
+      ${card(infoBlock, "md:col-span-2")}
     </div>`;
 }
 
@@ -606,7 +648,9 @@ function pageMemberPortal() {
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
       ${sectionTitle(lang === "bn" ? "সদস্য পোর্টাল" : "Member Portal", lang === "bn" ? "ডিজিটাল প্রোফাইল" : "Digital Profile")}
       <div class="space-y-10">
-        ${MEMBERS.map((m) => memberProfileCard(m, lang)).join("")}
+        ${MEMBERS.length
+          ? MEMBERS.map((m) => memberProfileCard(m, lang)).join("")
+          : card(`<p class="text-rope text-center py-6">${L(UI.noMembersYet, lang)}</p>`)}
       </div>
       <h3 class="sc-display text-forest font-bold text-xl mt-12 mb-5">${L(UI.badgeCollection, lang)}</h3>
       <div class="flex flex-wrap gap-4 sm:gap-6">
@@ -653,4 +697,5 @@ function render() {
   createIcons();
 }
 
+startMembersListener();
 render();
