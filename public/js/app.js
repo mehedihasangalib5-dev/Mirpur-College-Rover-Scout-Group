@@ -304,13 +304,6 @@ function pageHome() {
           ${GALLERY.slice(0, 4).map(item => `<img src="${galleryImgSrc(item)}" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
         </div>
       </div>
-    </section>
-
-    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-      ${sectionTitle(lang === "bn" ? "কৃতজ্ঞতা" : "Gratitude", lang === "bn" ? "পৃষ্ঠপোষক ও অংশীদার" : "Sponsors & Partners")}
-      <div class="flex flex-wrap gap-4 sm:gap-6 items-center opacity-80">
-        ${(lang === "bn" ? ["সোনালী ব্যাংক", "গ্রামীণফোন", "বাংলাদেশ ট্যুরিজম বোর্ড", "স্কয়ার ফাউন্ডেশন"] : ["Sonali Bank", "Grameenphone", "Bangladesh Tourism Board", "Square Foundation"]).map(s => `<div class="card px-5 py-3 sc-eyebrow text-forest text-xs">${s}</div>`).join("")}
-      </div>
     </section>`;
 }
 
