@@ -71,9 +71,6 @@ const UI = {
   noBadgesYet: { bn: "এখনো কোনো ব্যাজ অর্জন করেনি", en: "No badges earned yet" },
   newlyAdded: { bn: "নতুন", en: "New" },
   noMembersYet: { bn: "এখনো কোনো সদস্য নিবন্ধিত হয়নি। রেজিস্ট্রেশন ফর্ম পূরণ করলে এখানে প্রোফাইল দেখা যাবে।", en: "No members registered yet. Submit the registration form to see a profile here." },
-  noNewsYet: { bn: "এখনো কোনো সংবাদ প্রকাশিত হয়নি।", en: "No news published yet." },
-  noEventsYet: { bn: "এখনো কোনো ইভেন্ট যোগ করা হয়নি।", en: "No events added yet." },
-  noGalleryYet: { bn: "এখনো কোনো ছবি যোগ করা হয়নি।", en: "No gallery photos added yet." },
 };
 
 const NAV_GROUPS = [
@@ -105,6 +102,22 @@ const STATS = [
   { label: { bn: "অর্জিত ব্যাজ ও অ্যাওয়ার্ড", en: "Badges & Awards Earned" }, value: { bn: "২৩০+", en: "230+" }, icon: "award" },
 ];
 
+/* NEWS_SEED / EVENTS_SEED — demo content shown only until Firebase is
+   connected (js/firebase-config.js). Once connected, the live NEWS /
+   EVENTS variables below (kept in sync by js/firebase-content.js) take
+   over completely, reflecting exactly what's Published in /admin. */
+const NEWS_SEED = [
+  { title: { bn: "রোভার বেসিক কোর্স (RBC) ব্যাচ-১২ সম্পন্ন", en: "Rover Basic Course (RBC) Batch-12 concludes" }, date: { bn: "১৮ জুলাই, ২০২৬", en: "18 July 2026" }, tag: { bn: "প্রতিবেদন", en: "Report" } },
+  { title: { bn: "জাতীয় রোভার মুট ২০২৭ এর জন্য দল গঠন শুরু", en: "Team formation begins for National Rover Moot 2027" }, date: { bn: "১০ জুলাই, ২০২৬", en: "10 July 2026" }, tag: { bn: "ঘোষণা", en: "Announcement" } },
+  { title: { bn: "নতুন সেশনে রোভার স্কোয়ার ভর্তি শুরু", en: "Rover Squire admissions open for new session" }, date: { bn: "০২ জুলাই, ২০২৬", en: "02 July 2026" }, tag: { bn: "নোটিশ", en: "Notice" } },
+];
+
+const EVENTS_SEED = [
+  { title: { bn: "বার্ষিক সার্ভিস ক্যাম্প — মিরপুর", en: "Annual Service Camp — Mirpur" }, date: { bn: "১৫-১৭ ডিসেম্বর", en: "15–17 Dec" }, loc: { bn: "মিরপুর কলেজ ক্যাম্পাস", en: "Mirpur College Campus" }, seats: { bn: "৭৫/১০০", en: "75/100" } },
+  { title: { bn: "পাহাড়ি হাইকিং ও ট্রেকিং অভিযান", en: "Hill Hiking & Trekking Expedition" }, date: { bn: "০৫ সেপ্টেম্বর", en: "05 Sep" }, loc: { bn: "বান্দরবান", en: "Bandarban" }, seats: { bn: "২৮/৪০", en: "28/40" } },
+  { title: { bn: "রক্তদান ও কমিউনিটি সার্ভিস সপ্তাহ", en: "Blood Donation & Community Service Week" }, date: { bn: "২১-২৭ আগস্ট", en: "21–27 Aug" }, loc: { bn: "মিরপুর, ঢাকা", en: "Mirpur, Dhaka" }, seats: { bn: "৬০/৮০", en: "60/80" } },
+];
+
 const LEADERSHIP = [
   { role: { bn: "গ্রুপ সভাপতি (ভারপ্রাপ্ত অধ্যক্ষ)", en: "Group President (Acting Principal)" }, name: "ইফ্ফাত আজমী", icon: "shield-check" },
   { role: { bn: "রোভার স্কাউট লিডার (RSL) এবং গ্রুপ সম্পাদক", en: "Rover Scout Leader (RSL) & Group Secretary" }, name: "জনাব বুলবুল আলম", icon: "compass" },
@@ -131,6 +144,8 @@ const ACHIEVEMENTS = [
   { title: { bn: "প্রেসিডেন্ট রোভার স্কাউট অ্যাওয়ার্ড ২০২৫", en: "President's Rover Scout Award 2025" }, detail: { bn: "৯ জন রোভার সম্মানিত", en: "9 rovers honoured" }, icon: "graduation-cap" },
 ];
 
+const GALLERY_SEED = ["camp1","hike2","badge3","group4","tent5","flag6","fire7","river8"];
+
 const DOWNLOADS = [
   { name: { bn: "রোভার সদস্য রেজিস্ট্রেশন ফর্ম", en: "Rover Membership Registration Form" }, size: "245 KB · PDF", file: "downloads/registration-form.pdf" },
   { name: { bn: "রোভার লগ বুক টেমপ্লেট", en: "Rover Log Book Template" }, size: "410 KB · PDF", file: "downloads/rover-log-book-template.pdf" },
@@ -150,15 +165,15 @@ const ABOUT_BLOCKS = [
 ];
 
 /* ---------------- live content ----------------
-   These are populated with live data from Firestore by
-   js/firebase-content.js as soon as js/firebase-config.js has real
-   values — see admin/FIREBASE-SETUP.md to connect a real Firebase
-   project. Until then, these stay empty and the site's news/events/
-   gallery sections simply show nothing rather than demo content. */
+   These start out as copies of the demo seed data above, and are then
+   replaced with live data from Firestore by js/firebase-content.js as
+   soon as js/firebase-config.js has real values — see
+   admin/FIREBASE-SETUP.md to connect a real Firebase project. Until
+   then, the site keeps working with the built-in demo content. */
 let MEMBERS = [];
-let NEWS = [];
-let EVENTS = [];
-let GALLERY = [];
+let NEWS = NEWS_SEED.slice();
+let EVENTS = EVENTS_SEED.slice();
+let GALLERY = GALLERY_SEED.map((seed) => ({ id: seed, src: seed }));
 
 function nextMemberId() {
   const year = new Date().getFullYear();
