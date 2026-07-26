@@ -100,7 +100,7 @@ function renderNav() {
     </div>
 
     ${state.searchOpen ? `
-    <div class="border-t border-cream border-opacity-10 bg-forest-mid">
+    <div class="search-drop border-t border-cream border-opacity-10 bg-forest-mid">
       <div class="max-w-3xl mx-auto px-3 sm:px-6 py-3">
         ${renderSmartSearch()}
       </div>
@@ -152,8 +152,8 @@ function renderDrawer() {
   const lang = state.lang;
   return `
   <div class="fixed inset-0 z-50 flex justify-end">
-    <div class="absolute inset-0 bg-black opacity-50" onclick="setDrawer(false)"></div>
-    <div class="relative bg-forest w-80 max-w-[85vw] h-full p-6 overflow-y-auto contour-bg">
+    <div class="drawer-backdrop absolute inset-0 bg-black opacity-50" onclick="setDrawer(false)"></div>
+    <div class="drawer-panel relative bg-forest w-80 max-w-[85vw] h-full p-6 overflow-y-auto contour-bg">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-2">${compassMark(32)}<span class="sc-display text-cream font-bold">${L(UI.menu, lang)}</span></div>
         <button onclick="setDrawer(false)" style="background:none;border:none;cursor:pointer;">${icon("x", 'class="text-cream"')}</button>
@@ -303,6 +303,13 @@ function pageHome() {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           ${GALLERY.slice(0, 4).map(item => `<img src="${galleryImgSrc(item)}" alt="scout activity" class="rounded-lg object-cover w-full h-32 md:h-40" />`).join("")}
         </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+      ${sectionTitle(lang === "bn" ? "কৃতজ্ঞতা" : "Gratitude", lang === "bn" ? "পৃষ্ঠপোষক ও অংশীদার" : "Sponsors & Partners")}
+      <div class="flex flex-wrap gap-4 sm:gap-6 items-center opacity-80">
+        ${(lang === "bn" ? ["সোনালী ব্যাংক", "গ্রামীণফোন", "বাংলাদেশ ট্যুরিজম বোর্ড", "স্কয়ার ফাউন্ডেশন"] : ["Sonali Bank", "Grameenphone", "Bangladesh Tourism Board", "Square Foundation"]).map(s => `<div class="card px-5 py-3 sc-eyebrow text-forest text-xs">${s}</div>`).join("")}
       </div>
     </section>`;
 }
