@@ -264,7 +264,7 @@ function pageHome() {
           "6. A Scout is thrifty.",
           "7. A Scout is clean in thought, word, and deed.",
         ]).join("<br>")}</p>`)}
-         ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutMotto, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cরোভার স্কাউটের মূলমন্ত্র হলো: "সেবা" \u201d" : "\u201cThe Rover Scout motto is: "Service" \u201d"}</p>`)}
+         ${card(`<h3 class="sc-display text-forest text-xl font-bold mb-3">${L(UI.scoutMotto, lang)}</h3><p class="text-rope leading-relaxed">${lang === "bn" ? "\u201cরোভার স্কাউটের মূলমন্ত্র হলো: "সেবা" \u201d" : "\u201cThe Rover Scout motto is: Service\u201d"}</p>`)}
       </div>
     </section>
 
